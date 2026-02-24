@@ -42,7 +42,7 @@ story_location: /Users/jonathangreen/Documents/Rig/_bmad-output/implementation-a
 development_status:
   epic-1: in-progress
   1-1-project-initialization-with-starter-template: done
-  1-2-nostr-relay-service-layer: backlog
+  1-2-nostr-relay-service-layer: done
   1-3-arweave-ar-io-gateway-integration: backlog
   1-4-indexeddb-caching-layer: backlog
   1-5-tanstack-query-configuration: backlog
