@@ -1,0 +1,130 @@
+# generated: 2026-02-24
+# project: Rig
+# project_key: NOKEY
+# tracking_system: file-system
+# story_location: /Users/jonathangreen/Documents/Rig/_bmad-output/implementation-artifacts
+
+# STATUS DEFINITIONS:
+# ==================
+# Epic Status:
+#   - backlog: Epic not yet started
+#   - in-progress: Epic actively being worked on
+#   - done: All stories in epic completed
+#
+# Epic Status Transitions:
+#   - backlog → in-progress: Automatically when first story is created (via create-story)
+#   - in-progress → done: Manually when all stories reach 'done' status
+#
+# Story Status:
+#   - backlog: Story only exists in epic file
+#   - ready-for-dev: Story file created in stories folder
+#   - in-progress: Developer actively working on implementation
+#   - review: Ready for code review (via Dev's code-review workflow)
+#   - done: Story completed
+#
+# Retrospective Status:
+#   - optional: Can be completed but not required
+#   - done: Retrospective has been completed
+#
+# WORKFLOW NOTES:
+# ===============
+# - Epic transitions to 'in-progress' automatically when first story is created
+# - Stories can be worked in parallel if team capacity allows
+# - SM typically creates next story after previous one is 'done' to incorporate learnings
+# - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
+
+generated: 2026-02-24
+project: Rig
+project_key: NOKEY
+tracking_system: file-system
+story_location: /Users/jonathangreen/Documents/Rig/_bmad-output/implementation-artifacts
+
+development_status:
+  epic-1: in-progress
+  1-1-project-initialization-with-starter-template: done
+  1-2-nostr-relay-service-layer: backlog
+  1-3-arweave-ar-io-gateway-integration: backlog
+  1-4-indexeddb-caching-layer: backlog
+  1-5-tanstack-query-configuration: backlog
+  1-6-react-router-navigation-setup: backlog
+  1-7-core-layout-components: backlog
+  1-8-type-definitions-validation-schemas: backlog
+  1-9-service-layer-architecture-error-handling: backlog
+  1-10-development-environment-configuration: backlog
+  epic-1-retrospective: optional
+
+  epic-2: backlog
+  2-1-repository-list-page-with-nostr-query: backlog
+  2-2-repository-card-component-with-metadata: backlog
+  2-3-client-side-search-and-filtering: backlog
+  2-4-repository-detail-page: backlog
+  2-5-relay-status-indicators: backlog
+  2-6-real-time-repository-updates: backlog
+  epic-2-retrospective: optional
+
+  epic-3: backlog
+  3-1-file-tree-navigation-component: backlog
+  3-2-file-viewer-with-syntax-highlighting: backlog
+  3-3-branch-and-tag-selection: backlog
+  3-4-file-metadata-display: backlog
+  3-5-markdown-rendering-for-readme-files: backlog
+  3-6-arweave-verification-links-for-files: backlog
+  epic-3-retrospective: optional
+
+  epic-4: backlog
+  4-1-commit-history-list-page: backlog
+  4-2-commit-detail-page-with-metadata: backlog
+  4-3-diff-viewer-with-syntax-highlighting: backlog
+  4-4-commit-navigation-and-relationships: backlog
+  4-5-commit-arweave-verification: backlog
+  epic-4-retrospective: optional
+
+  epic-5: backlog
+  5-1-issue-list-page-with-filtering: backlog
+  5-2-issue-detail-page-with-threaded-comments: backlog
+  5-3-pull-request-list-page: backlog
+  5-4-pull-request-detail-page-with-discussion: backlog
+  5-5-status-indicators-for-issues-and-prs: backlog
+  5-6-real-time-updates-for-issues-and-prs: backlog
+  epic-5-retrospective: optional
+
+  epic-6: backlog
+  6-1-comprehensive-relay-status-dashboard: backlog
+  6-2-event-signature-verification-ui: backlog
+  6-3-arweave-transaction-verification-modal: backlog
+  6-4-arns-name-resolution-inspector: backlog
+  6-5-permanent-citation-generator: backlog
+  epic-6-retrospective: optional
+
+  epic-7: backlog
+  7-1-educational-tooltips-throughout-ui: backlog
+  7-2-decentralization-status-indicators: backlog
+  7-3-permanence-and-censorship-resistance-explainers: backlog
+  7-4-nip-34-technical-documentation: backlog
+  7-5-frontend-hosting-information: backlog
+  epic-7-retrospective: optional
+
+  epic-8: backlog
+  8-1-service-worker-implementation: backlog
+  8-2-data-freshness-indicators: backlog
+  8-3-offline-cache-access: backlog
+  8-4-progressive-loading-states: backlog
+  8-5-graceful-degradation-on-relay-failures: backlog
+  epic-8-retrospective: optional
+
+  epic-9: backlog
+  9-1-complete-keyboard-navigation: backlog
+  9-2-screen-reader-optimization: backlog
+  9-3-mobile-responsive-touch-optimization: backlog
+  9-4-zoom-and-text-scaling-support: backlog
+  9-5-color-independent-information-design: backlog
+  9-6-accessibility-testing-and-compliance: backlog
+  epic-9-retrospective: optional
+
+  epic-10: backlog
+  10-1-nip-34-event-inspector-devtools: backlog
+  10-2-architecture-documentation-and-patterns: backlog
+  10-3-relay-query-and-arweave-retrieval-pattern-guides: backlog
+  10-4-permanent-arns-url-sharing: backlog
+  10-5-powered-by-crosstown-branding-and-ecosystem-links: backlog
+  epic-10-retrospective: optional
