@@ -120,8 +120,10 @@ describe('Home Page', () => {
       renderHome()
 
       // Then: Loading skeleton should disappear after data arrives
+      // Query by aria-label to distinguish the loading skeleton from other role="status" elements
+      // (e.g., verification badge on RepoCard)
       await waitFor(() => {
-        expect(screen.queryByRole('status')).not.toBeInTheDocument()
+        expect(screen.queryByRole('status', { name: 'Loading repositories' })).not.toBeInTheDocument()
       })
 
       // And repository data should be visible

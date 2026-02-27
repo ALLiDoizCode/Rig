@@ -11,95 +11,52 @@
  * - Populated: Responsive grid of repository cards
  *
  * Story 2.1: Repository List Page with Nostr Query
+ * Story 2.2: Repository Card Component with Metadata (RepoCard integration)
  */
 import { useRepositories } from '@/features/repository/hooks/useRepositories'
+import { RepoCard } from '@/features/repository/RepoCard'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Button } from '@/components/ui/button'
 import { AlertCircleIcon, InboxIcon, RefreshCwIcon } from 'lucide-react'
 import { isRigError } from '@/types/common'
-import type { Repository } from '@/types/repository'
 
 /**
- * Truncate a hex public key for display.
- * Shows first 8 and last 8 characters with ellipsis.
- */
-function truncatePubkey(pubkey: string): string {
-  if (pubkey.length <= 20) return pubkey
-  return `${pubkey.slice(0, 8)}...${pubkey.slice(-8)}`
-}
-
-/**
- * Loading skeleton grid matching the repository layout.
+ * Loading skeleton grid matching the repository card layout.
  * Renders 6 skeleton cards in a responsive grid.
- * Card styling matches the populated RepositoryItem for visual consistency.
+ * Card structure mirrors RepoCard: header, content area, footer with border-t.
  */
 function RepositoryGridSkeleton() {
   return (
     <div role="status" aria-label="Loading repositories" aria-busy="true">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
         {Array.from({ length: 6 }).map((_, i) => (
           <div
             key={i}
-            className="flex flex-col gap-2 rounded-xl border bg-card p-5 shadow-sm"
+            className="flex flex-col rounded-xl border bg-card py-6 shadow-sm"
           >
-            <Skeleton className="h-5 w-3/4" />
-            <Skeleton className="h-4 w-full" />
-            <Skeleton className="h-4 w-5/6" />
-            <div className="mt-auto pt-2 border-t border-border">
-              <Skeleton className="h-3 w-1/3" />
+            {/* Header skeleton */}
+            <div className="px-6 pb-3">
+              <Skeleton className="h-5 w-3/5" />
+            </div>
+            {/* Content skeleton */}
+            <div className="flex-1 space-y-3 px-6">
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-5/6" />
+              <Skeleton className="h-3 w-2/5" />
+              <div className="flex gap-1.5 pt-1">
+                <Skeleton className="h-5 w-14 rounded-md" />
+                <Skeleton className="h-5 w-16 rounded-md" />
+              </div>
+            </div>
+            {/* Footer skeleton */}
+            <div className="mt-auto border-t border-border px-6 pt-4 flex items-center justify-between">
+              <Skeleton className="h-3 w-28" />
+              <Skeleton className="h-5 w-24 rounded-full" />
             </div>
           </div>
         ))}
       </div>
     </div>
-  )
-}
-
-/**
- * Temporary inline repository card for Story 2.1.
- * Will be replaced by the full RepoCard component in Story 2.2.
- *
- * Styled to match shadcn Card visual language (bg-card, rounded-xl, shadow-sm)
- * for design system consistency.
- */
-function RepositoryItem({ repo }: { repo: Repository }) {
-  return (
-    <article className="flex flex-col gap-2 rounded-xl border bg-card text-card-foreground p-5 shadow-sm transition-shadow hover:shadow-md">
-      <h2 className="text-base font-semibold leading-tight truncate">
-        {repo.name}
-      </h2>
-      {repo.description ? (
-        <p className="text-sm text-muted-foreground line-clamp-2 min-h-[2.5rem]">
-          {repo.description}
-        </p>
-      ) : (
-        <p className="text-sm text-muted-foreground/60 italic min-h-[2.5rem]">
-          No description
-        </p>
-      )}
-      {repo.topics.length > 0 && (
-        <div className="flex flex-wrap gap-1.5">
-          {repo.topics.slice(0, 4).map((topic) => (
-            <span
-              key={topic}
-              className="inline-flex items-center rounded-md bg-secondary px-2 py-0.5 text-xs font-medium text-secondary-foreground"
-            >
-              {topic}
-            </span>
-          ))}
-          {repo.topics.length > 4 && (
-            <span className="inline-flex items-center text-xs text-muted-foreground">
-              +{repo.topics.length - 4}
-            </span>
-          )}
-        </div>
-      )}
-      <div className="mt-auto pt-2 border-t border-border">
-        <p className="text-xs text-muted-foreground font-mono truncate">
-          {truncatePubkey(repo.owner)}
-        </p>
-      </div>
-    </article>
   )
 }
 
@@ -158,9 +115,9 @@ export function Component() {
       )}
 
       {status === 'success' && data.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {data.map((repo) => (
-            <RepositoryItem key={repo.id} repo={repo} />
+            <RepoCard key={repo.id} repo={repo} />
           ))}
         </div>
       )}

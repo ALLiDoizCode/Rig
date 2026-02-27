@@ -62,7 +62,9 @@ describe('App Router Integration', () => {
     it('renders Home page at /', async () => {
       renderRoute(['/'])
       // Home page shows "Repositories" heading and empty state
-      expect(await screen.findByRole('heading', { name: /repositories/i })).toBeInTheDocument()
+      // Increased timeout: lazy-loaded Home imports RepoCard + date-fns + shadcn/ui
+      // components, which takes longer to resolve under concurrent test execution.
+      expect(await screen.findByRole('heading', { name: /repositories/i }, { timeout: 5000 })).toBeInTheDocument()
       expect(await screen.findByText(/no repositories found/i)).toBeInTheDocument()
     })
 
