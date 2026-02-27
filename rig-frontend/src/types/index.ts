@@ -7,6 +7,7 @@
 
 // Common types
 export type { RigError, EntityStatus } from './common'
+export { isRigError } from './common'
 
 // Arweave types
 export type { ArweaveManifest, ArNSResolution } from './arweave'

@@ -29,7 +29,7 @@ export function Header({ onMobileMenuToggle }: HeaderProps) {
         <div className="container flex h-14 items-center gap-4">
           {/* Logo/branding */}
           <Link
-            to={ROUTE_PATHS.HOME}
+            to={ROUTE_PATHS.ROOT}
             className="flex items-center space-x-2 mr-4"
           >
             <span className="font-bold text-lg">Rig</span>

@@ -28,3 +28,24 @@ export interface RigError {
   /** Additional context data for debugging */
   context?: Record<string, unknown>
 }
+
+/**
+ * Type guard to check if an unknown error conforms to the RigError interface.
+ *
+ * TanStack Query v5 preserves the original thrown value in `error`.
+ * Since the service layer throws plain objects (not Error instances),
+ * this type guard safely checks for the `userMessage` property.
+ *
+ * @param error - Unknown error value from TanStack Query or catch blocks
+ * @returns True if the error has a string `userMessage` property
+ */
+export function isRigError(error: unknown): error is RigError {
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    'code' in error &&
+    typeof (error as RigError).code === 'string' &&
+    'userMessage' in error &&
+    typeof (error as RigError).userMessage === 'string'
+  )
+}

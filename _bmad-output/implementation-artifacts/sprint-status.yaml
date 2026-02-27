@@ -54,7 +54,7 @@ development_status:
   epic-1-retrospective: done
 
   epic-2: in-progress
-  2-1-repository-list-page-with-nostr-query: backlog
+  2-1-repository-list-page-with-nostr-query: done
   2-2-repository-card-component-with-metadata: backlog
   2-3-client-side-search-and-filtering: backlog
   2-4-repository-detail-page: backlog

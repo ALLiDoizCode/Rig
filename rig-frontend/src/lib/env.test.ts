@@ -12,11 +12,12 @@ describe('Environment Configuration', () => {
     it('should have ImportMetaEnv interface with all required environment variables', () => {
       // This test validates that TypeScript types are properly defined
       // If this compiles, the types are correct
-      const env: ImportMetaEnv = {
+      // Validate that our custom env vars are assignable to ImportMetaEnv
+      const env = {
         VITE_NOSTR_RELAYS: '',
         VITE_ARWEAVE_GATEWAY: '',
-        VITE_ENABLE_DEVTOOLS: '',
-      }
+        VITE_ENABLE_DEVTOOLS: 'false' as const,
+      } satisfies Pick<ImportMetaEnv, 'VITE_NOSTR_RELAYS' | 'VITE_ARWEAVE_GATEWAY' | 'VITE_ENABLE_DEVTOOLS'>
 
       expect(env).toBeDefined()
     })
@@ -75,8 +76,8 @@ describe('Environment Configuration', () => {
 
     it('should handle boolean-like string values for devtools', () => {
       // Environment variables are always strings
-      const trueValue = 'true'
-      const falseValue = 'false'
+      const trueValue: string = 'true'
+      const falseValue: string = 'false'
 
       expect(trueValue === 'true').toBe(true)
       expect(falseValue === 'true').toBe(false)
@@ -86,7 +87,7 @@ describe('Environment Configuration', () => {
   describe('Fallback Behavior', () => {
     it('should use fallback when env var is undefined', () => {
       // Simulate the fallback pattern used in constants
-      const envValue = undefined
+      const envValue = undefined as string | undefined
       const fallbackRelays = ['wss://relay.damus.io', 'wss://nos.lol', 'wss://relay.nostr.band']
       const result = envValue
         ? envValue.split(',').map((r: string) => r.trim()).filter(Boolean)

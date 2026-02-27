@@ -1,7 +1,9 @@
 import { describe, it, expect } from 'vitest'
-import {
+import type {
   NostrEvent,
   NostrTag,
+} from './nostr'
+import {
   BaseNostrEventSchema,
   RepoAnnouncementEventSchema,
   RepoStateEventSchema,

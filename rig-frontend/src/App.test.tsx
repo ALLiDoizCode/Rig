@@ -1,10 +1,25 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { act, render, screen, waitFor } from '@testing-library/react'
 import { createMemoryRouter, RouterProvider } from 'react-router'
-import { QueryClientProvider } from '@tanstack/react-query'
-import { queryClient } from './lib/query-client'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { routes } from './routes'
 import { ThemeProvider } from './contexts/ThemeContext'
+
+// Mock the Nostr service layer so Home page tests don't make real relay calls
+vi.mock('@/lib/nostr', () => ({
+  fetchRepositories: vi.fn().mockResolvedValue([]),
+}))
+
+// Fresh QueryClient per test to prevent cache leaks
+function createTestQueryClient() {
+  return new QueryClient({
+    defaultOptions: {
+      queries: { retry: false, gcTime: 0 },
+    },
+  })
+}
+
+let testQueryClient: QueryClient
 
 /**
  * Helper to render router at a specific path with all providers
@@ -15,7 +30,7 @@ import { ThemeProvider } from './contexts/ThemeContext'
 function renderRoute(initialEntries: string[]) {
   const router = createMemoryRouter(routes, { initialEntries })
   return render(
-    <QueryClientProvider client={queryClient}>
+    <QueryClientProvider client={testQueryClient}>
       <ThemeProvider>
         <RouterProvider router={router} />
       </ThemeProvider>
@@ -25,8 +40,7 @@ function renderRoute(initialEntries: string[]) {
 
 describe('App Router Integration', () => {
   beforeEach(() => {
-    // Clear any previous query cache
-    queryClient.clear()
+    testQueryClient = createTestQueryClient()
 
     // Mock matchMedia for ThemeProvider
     Object.defineProperty(window, 'matchMedia', {
@@ -47,9 +61,9 @@ describe('App Router Integration', () => {
   describe('Route Matching', () => {
     it('renders Home page at /', async () => {
       renderRoute(['/'])
-      // Text appears in both Footer and page content
-      expect((await screen.findAllByText(/rig.*decentralized git/i)).length).toBeGreaterThan(0)
-      expect(await screen.findByText(/repository discovery/i)).toBeInTheDocument()
+      // Home page shows "Repositories" heading and empty state
+      expect(await screen.findByRole('heading', { name: /repositories/i })).toBeInTheDocument()
+      expect(await screen.findByText(/no repositories found/i)).toBeInTheDocument()
     })
 
     it('renders RepoDetail page at /:owner/:repo', async () => {
@@ -157,9 +171,8 @@ describe('App Router Integration', () => {
 
       // The Suspense fallback should briefly appear
       // Using findBy to wait for final content
-      // Text appears in both Footer and page content
-      const content = await screen.findAllByText(/rig.*decentralized git/i)
-      expect(content.length).toBeGreaterThan(0)
+      // Home page shows "Repositories" heading after lazy load resolves
+      expect(await screen.findByRole('heading', { name: /repositories/i })).toBeInTheDocument()
     })
 
     it('successfully loads lazy component after suspense', async () => {
@@ -177,7 +190,7 @@ describe('App Router Integration', () => {
       // Start at home, navigate to repo, then back
       const router = createMemoryRouter(routes, { initialEntries: ['/', '/alice/my-repo'], initialIndex: 1 })
       render(
-        <QueryClientProvider client={queryClient}>
+        <QueryClientProvider client={testQueryClient}>
           <ThemeProvider>
             <RouterProvider router={router} />
           </ThemeProvider>
@@ -195,8 +208,8 @@ describe('App Router Integration', () => {
       await waitFor(() => {
         expect(screen.queryByText(/repository:/i)).not.toBeInTheDocument()
       })
-      // Text appears in both Footer and page content
-      expect((await screen.findAllByText(/rig.*decentralized git/i)).length).toBeGreaterThan(0)
+      // Home page shows "Repositories" heading
+      expect(await screen.findByRole('heading', { name: /repositories/i })).toBeInTheDocument()
     })
 
     it('supports browser forward button navigation', async () => {
@@ -206,7 +219,7 @@ describe('App Router Integration', () => {
         initialIndex: 1,
       })
       render(
-        <QueryClientProvider client={queryClient}>
+        <QueryClientProvider client={testQueryClient}>
           <ThemeProvider>
             <RouterProvider router={router} />
           </ThemeProvider>
@@ -235,7 +248,7 @@ describe('App Router Integration', () => {
       // Render with the full provider stack
       const router = createMemoryRouter(routes, { initialEntries: ['/'] })
       const { container } = render(
-        <QueryClientProvider client={queryClient}>
+        <QueryClientProvider client={testQueryClient}>
           <ThemeProvider>
             <RouterProvider router={router} />
           </ThemeProvider>
@@ -247,12 +260,12 @@ describe('App Router Integration', () => {
     it('allows TanStack Query to work within routed components', async () => {
       renderRoute(['/'])
 
-      // Text appears in both Footer and page content
-      expect((await screen.findAllByText(/rig.*decentralized git/i)).length).toBeGreaterThan(0)
+      // Home page shows "Repositories" heading
+      expect(await screen.findByRole('heading', { name: /repositories/i })).toBeInTheDocument()
 
       // Query client should be available (verified by no errors)
-      expect(queryClient).toBeDefined()
-      expect(queryClient.getQueryCache()).toBeDefined()
+      expect(testQueryClient).toBeDefined()
+      expect(testQueryClient.getQueryCache()).toBeDefined()
     })
   })
 
@@ -296,11 +309,29 @@ describe('App Router Integration', () => {
 })
 
 describe('Integration with main.tsx Setup', () => {
+  beforeEach(() => {
+    // Mock matchMedia for ThemeProvider
+    Object.defineProperty(window, 'matchMedia', {
+      writable: true,
+      value: vi.fn().mockImplementation((query: string) => ({
+        matches: false,
+        media: query,
+        onchange: null,
+        addListener: vi.fn(),
+        removeListener: vi.fn(),
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+        dispatchEvent: vi.fn(),
+      })),
+    })
+  })
+
   it('renders with QueryClientProvider wrapper from main.tsx', async () => {
     // Simulate the exact setup from main.tsx
+    const qc = createTestQueryClient()
     const router = createMemoryRouter(routes, { initialEntries: ['/'] })
     const { container } = render(
-      <QueryClientProvider client={queryClient}>
+      <QueryClientProvider client={qc}>
         <ThemeProvider>
           <RouterProvider router={router} />
         </ThemeProvider>
@@ -308,8 +339,8 @@ describe('Integration with main.tsx Setup', () => {
     )
 
     expect(container).toBeInTheDocument()
-    // Text appears in both Footer and page content
-    expect((await screen.findAllByText(/rig.*decentralized git/i)).length).toBeGreaterThan(0)
+    // Home page shows "Repositories" heading
+    expect(await screen.findByRole('heading', { name: /repositories/i })).toBeInTheDocument()
   })
 
   // DevTools rendering is handled in main.tsx, not testable via router tests.

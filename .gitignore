@@ -1,0 +1,12 @@
+.auto-bmad-tmp/
+
+# Playwright MCP artifacts
+.playwright-mcp/
+
+# Screenshot artifacts from browser verification
+*.png
+!forgejo/**/*.png
+!rig-frontend/public/**/*.svg
+
+# Node modules (should never be tracked at monorepo root)
+node_modules/
