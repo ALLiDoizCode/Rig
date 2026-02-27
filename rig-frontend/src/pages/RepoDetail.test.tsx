@@ -2,6 +2,7 @@
  * Tests for RepoDetail page component
  *
  * Story 2.4: Repository Detail Page
+ * Story 2.5: Relay Status Indicators (RelayStatusBadge integration in detail page)
  *
  * Test coverage:
  * - Repository metadata display (name, description, maintainers, ArNS, topics, timestamp)
@@ -15,6 +16,7 @@
  * - ArNS URL copy functionality
  * - Deep linking via route params
  * - Graceful rendering with missing optional fields
+ * - Relay status badge integration (AC #1, #3, #5)
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen, waitFor, within } from '@testing-library/react'
@@ -25,10 +27,14 @@ import {
   createRepository,
   resetRepositoryCounter,
 } from '@/test-utils/factories/repository'
-
+import {
+  createRelayResult,
+  createRelayQueryMeta,
+} from '@/test-utils/factories/relay-status'
 // Mock the nostr service layer
 vi.mock('@/lib/nostr', () => ({
   fetchRepositories: vi.fn(),
+  fetchRepositoriesWithMeta: vi.fn(),
 }))
 
 // Mock react-syntax-highlighter to avoid heavy rendering in tests
@@ -44,7 +50,7 @@ vi.mock('react-syntax-highlighter/dist/esm/styles/prism', () => ({
   oneDark: {},
 }))
 
-const { fetchRepositories } = await import('@/lib/nostr')
+const { fetchRepositoriesWithMeta } = await import('@/lib/nostr')
 const { Component } = await import('./RepoDetail')
 
 function createTestQueryClient() {
@@ -55,12 +61,26 @@ function createTestQueryClient() {
   })
 }
 
+/** Helper to wrap repositories in the fetchRepositoriesWithMeta response format */
+function createMetaResponse(repos: ReturnType<typeof createRepository>[]) {
+  const meta = createRelayQueryMeta({
+    results: [
+      createRelayResult({ url: 'wss://relay.damus.io' }),
+      createRelayResult({ url: 'wss://nos.lol' }),
+    ],
+    respondedCount: 2,
+    totalCount: 2,
+  })
+  return { repositories: repos, meta }
+}
+
 /**
  * Render the RepoDetail page with router context and query client.
  * Uses createMemoryRouter with initialEntries to set URL params.
+ * Optionally accepts a pre-configured QueryClient (e.g., with relay metadata seeded).
  */
-function renderRepoDetail(owner = 'test-owner', repo = 'test-repo') {
-  const queryClient = createTestQueryClient()
+function renderRepoDetail(owner = 'test-owner', repo = 'test-repo', existingQueryClient?: QueryClient) {
+  const queryClient = existingQueryClient ?? createTestQueryClient()
   const router = createMemoryRouter(
     [
       { path: '/:owner/:repo', element: <Component /> },
@@ -90,7 +110,7 @@ function setupWithReadme(readmeContent: string) {
     owner: 'test-owner',
     webUrls: ['https://example.ar-io.dev'],
   })
-  vi.mocked(fetchRepositories).mockResolvedValue([repo])
+  vi.mocked(fetchRepositoriesWithMeta).mockResolvedValue(createMetaResponse([repo]))
   vi.mocked(fetch).mockResolvedValue(
     new Response(readmeContent, { status: 200 })
   )
@@ -113,7 +133,7 @@ describe('RepoDetail Page', () => {
   describe('Loading State (AC #7)', () => {
     // AT-2.4.15: Loading state skeleton
     it('should display loading skeleton with role="status" and aria-label while fetching', () => {
-      vi.mocked(fetchRepositories).mockReturnValue(new Promise(() => {}))
+      vi.mocked(fetchRepositoriesWithMeta).mockReturnValue(new Promise(() => {}))
 
       renderRepoDetail()
 
@@ -134,7 +154,7 @@ describe('RepoDetail Page', () => {
         message: 'Relay query failed',
         userMessage: 'Unable to connect to Nostr relays. Please try again.',
       }
-      vi.mocked(fetchRepositories).mockRejectedValue(rigError)
+      vi.mocked(fetchRepositoriesWithMeta).mockRejectedValue(rigError)
 
       renderRepoDetail()
 
@@ -146,7 +166,7 @@ describe('RepoDetail Page', () => {
     })
 
     it('should display fallback error message for non-RigError', async () => {
-      vi.mocked(fetchRepositories).mockRejectedValue(
+      vi.mocked(fetchRepositoriesWithMeta).mockRejectedValue(
         new Error('Network failure')
       )
 
@@ -161,13 +181,13 @@ describe('RepoDetail Page', () => {
       const mockRepos = [
         createRepository({ id: 'test-repo', owner: 'test-owner' }),
       ]
-      vi.mocked(fetchRepositories)
+      vi.mocked(fetchRepositoriesWithMeta)
         .mockRejectedValueOnce({
           code: 'RELAY_TIMEOUT',
           message: 'Failed',
           userMessage: 'Unable to connect.',
         })
-        .mockResolvedValueOnce(mockRepos)
+        .mockResolvedValueOnce(createMetaResponse(mockRepos))
 
       // Mock fetch for README
       vi.mocked(fetch).mockResolvedValue(
@@ -188,13 +208,13 @@ describe('RepoDetail Page', () => {
           screen.getByRole('heading', { level: 1 })
         ).toBeInTheDocument()
       })
-      expect(fetchRepositories).toHaveBeenCalledTimes(2)
+      expect(fetchRepositoriesWithMeta).toHaveBeenCalledTimes(2)
     })
   })
 
   describe('Not Found State (AC #8)', () => {
     it('should display "Repository not found" when repo is null', async () => {
-      vi.mocked(fetchRepositories).mockResolvedValue([])
+      vi.mocked(fetchRepositoriesWithMeta).mockResolvedValue(createMetaResponse([]))
 
       renderRepoDetail('nonexistent-owner', 'nonexistent-repo')
 
@@ -204,7 +224,7 @@ describe('RepoDetail Page', () => {
     })
 
     it('should display link back to home page when not found', async () => {
-      vi.mocked(fetchRepositories).mockResolvedValue([])
+      vi.mocked(fetchRepositoriesWithMeta).mockResolvedValue(createMetaResponse([]))
 
       renderRepoDetail()
 
@@ -233,7 +253,7 @@ describe('RepoDetail Page', () => {
         createdAt: Math.floor(Date.now() / 1000) - 3600, // 1 hour ago
         ...overrides,
       })
-      vi.mocked(fetchRepositories).mockResolvedValue([repo])
+      vi.mocked(fetchRepositoriesWithMeta).mockResolvedValue(createMetaResponse([repo]))
       vi.mocked(fetch).mockResolvedValue(
         new Response('# README content', { status: 200 })
       )
@@ -382,7 +402,7 @@ describe('RepoDetail Page', () => {
         owner: 'test-owner',
         webUrls: ['javascript:alert("xss")'],
       })
-      vi.mocked(fetchRepositories).mockResolvedValue([repo])
+      vi.mocked(fetchRepositoriesWithMeta).mockResolvedValue(createMetaResponse([repo]))
 
       renderRepoDetail()
 
@@ -402,7 +422,7 @@ describe('RepoDetail Page', () => {
         owner: 'test-owner',
         webUrls: ['data:text/html,<script>alert(1)</script>'],
       })
-      vi.mocked(fetchRepositories).mockResolvedValue([repo])
+      vi.mocked(fetchRepositoriesWithMeta).mockResolvedValue(createMetaResponse([repo]))
 
       renderRepoDetail()
 
@@ -421,7 +441,7 @@ describe('RepoDetail Page', () => {
         owner: 'test-owner',
         webUrls: ['https://example.ar-io.dev'],
       })
-      vi.mocked(fetchRepositories).mockResolvedValue([repo])
+      vi.mocked(fetchRepositoriesWithMeta).mockResolvedValue(createMetaResponse([repo]))
       vi.mocked(fetch).mockResolvedValue(
         new Response('# README', { status: 200 })
       )
@@ -442,7 +462,7 @@ describe('RepoDetail Page', () => {
         description: '',
         webUrls: [],
       })
-      vi.mocked(fetchRepositories).mockResolvedValue([repo])
+      vi.mocked(fetchRepositoriesWithMeta).mockResolvedValue(createMetaResponse([repo]))
 
       renderRepoDetail()
 
@@ -461,7 +481,7 @@ describe('RepoDetail Page', () => {
         maintainers: [],
         webUrls: [],
       })
-      vi.mocked(fetchRepositories).mockResolvedValue([repo])
+      vi.mocked(fetchRepositoriesWithMeta).mockResolvedValue(createMetaResponse([repo]))
 
       renderRepoDetail()
 
@@ -480,7 +500,7 @@ describe('RepoDetail Page', () => {
         owner: 'test-owner',
         webUrls: [],
       })
-      vi.mocked(fetchRepositories).mockResolvedValue([repo])
+      vi.mocked(fetchRepositoriesWithMeta).mockResolvedValue(createMetaResponse([repo]))
 
       renderRepoDetail()
 
@@ -500,7 +520,7 @@ describe('RepoDetail Page', () => {
         topics: [],
         webUrls: [],
       })
-      vi.mocked(fetchRepositories).mockResolvedValue([repo])
+      vi.mocked(fetchRepositoriesWithMeta).mockResolvedValue(createMetaResponse([repo]))
 
       renderRepoDetail()
 
@@ -708,7 +728,7 @@ describe('RepoDetail Page', () => {
         owner: 'test-owner',
         webUrls: ['https://example.ar-io.dev'],
       })
-      vi.mocked(fetchRepositories).mockResolvedValue([repo])
+      vi.mocked(fetchRepositoriesWithMeta).mockResolvedValue(createMetaResponse([repo]))
       vi.mocked(fetch).mockResolvedValue(
         new Response(null, { status: 404 })
       )
@@ -726,7 +746,7 @@ describe('RepoDetail Page', () => {
         owner: 'test-owner',
         webUrls: [],
       })
-      vi.mocked(fetchRepositories).mockResolvedValue([repo])
+      vi.mocked(fetchRepositoriesWithMeta).mockResolvedValue(createMetaResponse([repo]))
 
       renderRepoDetail()
 
@@ -742,7 +762,7 @@ describe('RepoDetail Page', () => {
         name: 'My Repo',
         webUrls: [],
       })
-      vi.mocked(fetchRepositories).mockResolvedValue([repo])
+      vi.mocked(fetchRepositoriesWithMeta).mockResolvedValue(createMetaResponse([repo]))
 
       renderRepoDetail()
 
@@ -764,7 +784,7 @@ describe('RepoDetail Page', () => {
         name: 'Deep Link Repo',
         webUrls: [],
       })
-      vi.mocked(fetchRepositories).mockResolvedValue([repo])
+      vi.mocked(fetchRepositoriesWithMeta).mockResolvedValue(createMetaResponse([repo]))
 
       renderRepoDetail('deep-link-owner', 'deep-link-repo')
 
@@ -783,7 +803,7 @@ describe('RepoDetail Page', () => {
         owner: 'test-owner',
         webUrls: [],
       })
-      vi.mocked(fetchRepositories).mockResolvedValue([repo])
+      vi.mocked(fetchRepositoriesWithMeta).mockResolvedValue(createMetaResponse([repo]))
 
       renderRepoDetail()
 
@@ -806,7 +826,7 @@ describe('RepoDetail Page', () => {
         topics: ['nostr', 'arweave'],
         webUrls: [],
       })
-      vi.mocked(fetchRepositories).mockResolvedValue([repo])
+      vi.mocked(fetchRepositoriesWithMeta).mockResolvedValue(createMetaResponse([repo]))
 
       renderRepoDetail()
 
@@ -819,6 +839,168 @@ describe('RepoDetail Page', () => {
         expect(items[0]).toHaveTextContent('nostr')
         expect(items[1]).toHaveTextContent('arweave')
       })
+    })
+  })
+
+  describe('Relay Status Badge Integration (Story 2.5)', () => {
+    /**
+     * Relay metadata for tests with 2 responding, 1 failed relay (2/3).
+     * Since useRepository now calls fetchRepositoriesWithMeta and writes
+     * relay metadata to cache as a side effect, the mock must return the
+     * desired relay metadata directly (no pre-seeding needed).
+     */
+    function createDetailedRelayMeta() {
+      return createRelayQueryMeta({
+        results: [
+          createRelayResult({ url: 'wss://relay.damus.io', latencyMs: 120, eventCount: 10 }),
+          createRelayResult({ url: 'wss://nos.lol', latencyMs: 250, eventCount: 8 }),
+          createRelayResult({
+            url: 'wss://relay.nostr.band',
+            status: 'failed',
+            latencyMs: 2000,
+            eventCount: 0,
+            error: 'Timeout',
+          }),
+        ],
+        respondedCount: 2,
+        totalCount: 3,
+        queriedAt: Math.floor(Date.now() / 1000) - 60,
+      })
+    }
+
+    /** Helper to create fetchRepositoriesWithMeta response with specific relay metadata */
+    function createDetailedMetaResponse(repos: ReturnType<typeof createRepository>[]) {
+      return { repositories: repos, meta: createDetailedRelayMeta() }
+    }
+
+    it('should display RelayStatusBadge in metadata card when relay metadata is available', async () => {
+      const repo = createRepository({
+        id: 'test-repo',
+        owner: 'test-owner',
+        webUrls: [],
+      })
+      vi.mocked(fetchRepositoriesWithMeta).mockResolvedValue(createDetailedMetaResponse([repo]))
+
+      const queryClient = new QueryClient({
+        defaultOptions: {
+          queries: { retry: false, gcTime: Infinity, retryDelay: 0 },
+        },
+      })
+      renderRepoDetail('test-owner', 'test-repo', queryClient)
+
+      await waitFor(() => {
+        expect(screen.getByRole('heading', { level: 1 })).toBeInTheDocument()
+      })
+
+      // Relay status badge should be visible with correct text
+      await waitFor(() => {
+        expect(screen.getByText('Verified on 2 of 3 relays')).toBeInTheDocument()
+      })
+    })
+
+    it('should render badge with detailed variant (expandable) on detail page', async () => {
+      const user = userEvent.setup()
+      const repo = createRepository({
+        id: 'test-repo',
+        owner: 'test-owner',
+        webUrls: [],
+      })
+      vi.mocked(fetchRepositoriesWithMeta).mockResolvedValue(createDetailedMetaResponse([repo]))
+
+      const queryClient = new QueryClient({
+        defaultOptions: {
+          queries: { retry: false, gcTime: Infinity, retryDelay: 0 },
+        },
+      })
+      renderRepoDetail('test-owner', 'test-repo', queryClient)
+
+      await waitFor(() => {
+        expect(screen.getByText('Verified on 2 of 3 relays')).toBeInTheDocument()
+      })
+
+      // The detailed variant should have an expandable trigger button
+      const trigger = screen.getByRole('button', { name: /verified on/i })
+      expect(trigger).toBeInTheDocument()
+      expect(trigger).toHaveAttribute('aria-expanded', 'false')
+
+      // Click to expand panel
+      await user.click(trigger)
+
+      // Panel should show relay details
+      expect(screen.getByText('Responding Relays')).toBeInTheDocument()
+      expect(screen.getByText('Failed Relays')).toBeInTheDocument()
+      expect(screen.getByText('wss://relay.damus.io')).toBeInTheDocument()
+      expect(screen.getByText('wss://nos.lol')).toBeInTheDocument()
+      expect(screen.getByText('wss://relay.nostr.band')).toBeInTheDocument()
+      expect(screen.getByText('120ms')).toBeInTheDocument()
+      expect(screen.getByText('250ms')).toBeInTheDocument()
+    })
+
+    it('should show Retry All Relays button in expanded panel when some relays failed', async () => {
+      const user = userEvent.setup()
+      const repo = createRepository({
+        id: 'test-repo',
+        owner: 'test-owner',
+        webUrls: [],
+      })
+      vi.mocked(fetchRepositoriesWithMeta).mockResolvedValue(createDetailedMetaResponse([repo]))
+
+      const queryClient = new QueryClient({
+        defaultOptions: {
+          queries: { retry: false, gcTime: Infinity, retryDelay: 0 },
+        },
+      })
+      renderRepoDetail('test-owner', 'test-repo', queryClient)
+
+      await waitFor(() => {
+        expect(screen.getByText('Verified on 2 of 3 relays')).toBeInTheDocument()
+      })
+
+      const trigger = screen.getByRole('button', { name: /verified on/i })
+      await user.click(trigger)
+
+      // Retry button should be visible since 1 of 3 relays failed
+      const retryButton = screen.getByRole('button', { name: /retry all relay queries/i })
+      expect(retryButton).toBeInTheDocument()
+    })
+
+    it('should show data age indicator in expanded panel', async () => {
+      const user = userEvent.setup()
+      const repo = createRepository({
+        id: 'test-repo',
+        owner: 'test-owner',
+        webUrls: [],
+      })
+      vi.mocked(fetchRepositoriesWithMeta).mockResolvedValue(createDetailedMetaResponse([repo]))
+
+      const queryClient = new QueryClient({
+        defaultOptions: {
+          queries: { retry: false, gcTime: Infinity, retryDelay: 0 },
+        },
+      })
+      renderRepoDetail('test-owner', 'test-repo', queryClient)
+
+      await waitFor(() => {
+        expect(screen.getByText('Verified on 2 of 3 relays')).toBeInTheDocument()
+      })
+
+      const trigger = screen.getByRole('button', { name: /verified on/i })
+      await user.click(trigger)
+
+      // Data age indicator should show "Last updated ... from 2/3 relays"
+      expect(screen.getByText(/last updated .* from 2\/3 relays/i)).toBeInTheDocument()
+    })
+
+    it('should NOT display relay badge when fetch is still pending', () => {
+      // When fetch has not resolved yet, no relay metadata is in cache
+      vi.mocked(fetchRepositoriesWithMeta).mockReturnValue(new Promise(() => {}))
+
+      renderRepoDetail()
+
+      // Loading state shows -- no relay badge should be visible
+      const loadingElement = screen.getByRole('status')
+      expect(loadingElement).toBeInTheDocument()
+      expect(screen.queryByText(/verified on/i)).not.toBeInTheDocument()
     })
   })
 })

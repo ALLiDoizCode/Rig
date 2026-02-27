@@ -5,6 +5,7 @@
  * maintainers, ArNS URL, topics, and README content rendered as markdown.
  *
  * Story 2.4: Repository Detail Page
+ * Story 2.5: Relay Status Indicators (RelayStatusBadge integration)
  */
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { useParams, Link } from 'react-router'
@@ -18,7 +19,9 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useRepository } from '@/features/repository/hooks/useRepository'
+import { useRelayStatus } from '@/features/repository/hooks/useRelayStatus'
 import { useReadme } from '@/features/repository/hooks/useReadme'
+import { RelayStatusBadge } from '@/components/RelayStatusBadge'
 import { truncatePubkey, formatRelativeTime } from '@/lib/format'
 import { isRigError } from '@/types/common'
 import {
@@ -33,6 +36,7 @@ import {
   SearchXIcon,
   FileTextIcon,
   RefreshCwIcon,
+  WifiIcon,
 } from 'lucide-react'
 
 export function Component() {
@@ -41,6 +45,11 @@ export function Component() {
 
   const readmeEnabled = status === 'success' && data !== null
   const readmeResult = useReadme(data?.webUrls ?? [], readmeEnabled)
+  const {
+    meta: relayMeta,
+    dataAge,
+    refetch: refetchRelays,
+  } = useRelayStatus()
 
   const [copied, setCopied] = useState(false)
   const copyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -280,6 +289,21 @@ export function Component() {
             <span className="font-medium text-foreground">Updated</span>
             <span className="text-muted-foreground">{formatRelativeTime(data.createdAt)}</span>
           </div>
+
+          {/* Relay Status */}
+          {relayMeta && (
+            <div className="flex items-start gap-3 text-sm">
+              <WifiIcon className="size-4 mt-0.5 shrink-0 text-muted-foreground" />
+              <div className="flex-1 min-w-0">
+                <RelayStatusBadge
+                  meta={relayMeta}
+                  variant="detailed"
+                  dataAge={dataAge}
+                  onRetry={refetchRelays}
+                />
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 

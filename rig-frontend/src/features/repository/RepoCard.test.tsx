@@ -2,12 +2,13 @@
  * Tests for RepoCard component
  *
  * Story 2.2: Repository Card Component with Metadata
+ * Story 2.5: Relay Status Indicators (relay metadata as prop)
  *
  * Test coverage:
  * - Metadata display (name, description, maintainers, timestamp, ArNS URL)
  * - Clickable link navigation to correct route
  * - Description truncation and expand/collapse behavior
- * - Verification badge with correct relay count and color
+ * - Verification badge with correct relay count and color (now via relayMeta prop)
  * - Copy button clipboard interaction
  * - Accessibility attributes (ARIA labels, roles)
  * - Graceful rendering when optional fields are missing
@@ -21,18 +22,26 @@ import {
   createRepository,
   resetRepositoryCounter,
 } from '@/test-utils/factories/repository'
+import {
+  createRelayResult,
+  createRelayQueryMeta,
+} from '@/test-utils/factories/relay-status'
 import { RepoCard } from './RepoCard'
 import type { Repository } from '@/types/repository'
+import type { RelayQueryMeta } from '@/types/relay-status'
 
 // Clipboard mock -- set up fresh each test
 let mockWriteText: ReturnType<typeof vi.fn>
 
-function renderRepoCard(repoOverrides: Partial<Repository> = {}) {
+function renderRepoCard(
+  repoOverrides: Partial<Repository> = {},
+  relayMeta?: RelayQueryMeta
+) {
   const repo = createRepository(repoOverrides)
   return {
     ...render(
       <MemoryRouter>
-        <RepoCard repo={repo} />
+        <RepoCard repo={repo} relayMeta={relayMeta} />
       </MemoryRouter>
     ),
     repo,
@@ -145,8 +154,6 @@ describe('RepoCard', () => {
     })
 
     it('[P1] should NOT show "Read more" button when description fits within 3 lines', () => {
-      // In happy-dom, scrollHeight === clientHeight === 0, so isTruncated is false.
-      // Explicitly verify the button is absent when text is not truncated.
       renderRepoCard({
         description: 'A short description.',
       })
@@ -157,10 +164,6 @@ describe('RepoCard', () => {
     it('[P1] should toggle "Read more" / "Show less" button on click', async () => {
       const user = userEvent.setup()
 
-      // In happy-dom, scrollHeight === clientHeight === 0, so isTruncated won't be
-      // auto-detected. We need to manually trigger the expand UI.
-      // The expand button only shows if isTruncated is true OR isExpanded is true.
-      // We mock scrollHeight > clientHeight to simulate truncation.
       const mockRef = vi.spyOn(HTMLParagraphElement.prototype, 'scrollHeight', 'get').mockReturnValue(100)
       const mockClientHeight = vi.spyOn(HTMLParagraphElement.prototype, 'clientHeight', 'get').mockReturnValue(60)
 
@@ -191,45 +194,85 @@ describe('RepoCard', () => {
     })
   })
 
-  describe('Verification Badge', () => {
-    // AT-2.2.10: Verification badge shows "Verified on X relays"
-    it('[P1] should display badge with green color for 4+ relays', () => {
-      renderRepoCard({
-        relays: ['wss://r1', 'wss://r2', 'wss://r3', 'wss://r4'],
+  describe('Verification Badge (Story 2.5 - relayMeta prop)', () => {
+    it('[P1] should display badge with green color when relayMeta has >= 80% response', () => {
+      const meta = createRelayQueryMeta({
+        results: [
+          createRelayResult({ url: 'wss://r1' }),
+          createRelayResult({ url: 'wss://r2' }),
+          createRelayResult({ url: 'wss://r3' }),
+          createRelayResult({ url: 'wss://r4' }),
+        ],
+        respondedCount: 4,
+        totalCount: 5,
       })
 
-      const badge = screen.getByText('Verified on 4 relays')
+      renderRepoCard({}, meta)
+
+      const badge = screen.getByText('Verified on 4 of 5 relays')
       expect(badge).toBeInTheDocument()
       expect(badge.className).toContain('border-green-600')
-      expect(badge.className).toContain('text-green-600')
     })
 
-    it('[P1] should display badge with yellow color for 2-3 relays', () => {
-      renderRepoCard({
-        relays: ['wss://r1', 'wss://r2'],
+    it('[P1] should display badge with yellow color for relayMeta with >= 40% but < 80%', () => {
+      const meta = createRelayQueryMeta({
+        results: [
+          createRelayResult({ url: 'wss://r1' }),
+          createRelayResult({ url: 'wss://r2' }),
+          createRelayResult({ url: 'wss://r3', status: 'failed', eventCount: 0 }),
+          createRelayResult({ url: 'wss://r4', status: 'failed', eventCount: 0 }),
+          createRelayResult({ url: 'wss://r5', status: 'failed', eventCount: 0 }),
+        ],
+        respondedCount: 2,
+        totalCount: 5,
       })
 
-      const badge = screen.getByText('Verified on 2 relays')
-      expect(badge).toBeInTheDocument()
+      renderRepoCard({}, meta)
+
+      const badge = screen.getByText('Verified on 2 of 5 relays')
       expect(badge.className).toContain('border-yellow-600')
-      expect(badge.className).toContain('text-yellow-600')
     })
 
-    it('[P1] should display badge with orange color for 1 relay', () => {
-      renderRepoCard({
-        relays: ['wss://r1'],
+    it('[P1] should display badge with orange color for relayMeta with < 40%', () => {
+      const meta = createRelayQueryMeta({
+        results: [
+          createRelayResult({ url: 'wss://r1' }),
+          createRelayResult({ url: 'wss://r2', status: 'failed', eventCount: 0 }),
+          createRelayResult({ url: 'wss://r3', status: 'failed', eventCount: 0 }),
+          createRelayResult({ url: 'wss://r4', status: 'failed', eventCount: 0 }),
+          createRelayResult({ url: 'wss://r5', status: 'failed', eventCount: 0 }),
+        ],
+        respondedCount: 1,
+        totalCount: 5,
       })
 
-      const badge = screen.getByText('Verified on 1 relay')
-      expect(badge).toBeInTheDocument()
+      renderRepoCard({}, meta)
+
+      const badge = screen.getByText('Verified on 1 of 5 relays')
       expect(badge.className).toContain('border-orange-600')
-      expect(badge.className).toContain('text-orange-600')
     })
 
-    it('[P1] should hide badge when relay count is 0', () => {
+    it('[P1] should hide badge when relayMeta is not provided', () => {
       renderRepoCard({ relays: [] })
 
       expect(screen.queryByText(/verified on/i)).not.toBeInTheDocument()
+    })
+
+    it('[P1] should have aria-label and role="status" on verification badge', () => {
+      const meta = createRelayQueryMeta({
+        results: [
+          createRelayResult({ url: 'wss://r1' }),
+          createRelayResult({ url: 'wss://r2' }),
+          createRelayResult({ url: 'wss://r3' }),
+        ],
+        respondedCount: 3,
+        totalCount: 3,
+      })
+
+      renderRepoCard({}, meta)
+
+      const badge = screen.getByRole('status')
+      expect(badge).toHaveAttribute('aria-label', 'Verified on 3 of 3 relays')
     })
   })
 
@@ -271,8 +314,6 @@ describe('RepoCard', () => {
 
       expect(screen.getByText('Copied!')).toBeInTheDocument()
 
-      // After 2 seconds, "Copied!" should disappear.
-      // Wrap in act() because the setTimeout callback triggers a state update.
       act(() => {
         vi.advanceTimersByTime(2000)
       })
@@ -294,7 +335,6 @@ describe('RepoCard', () => {
       // Should not throw
       await user.click(copyBtn)
 
-      // Wait for async operation to settle
       await waitFor(() => {
         expect(mockWriteText).toHaveBeenCalled()
       })
@@ -368,14 +408,6 @@ describe('RepoCard', () => {
       const toggleBtn = screen.getByRole('button', { name: /toggle description/i })
       expect(toggleBtn).toHaveAttribute('aria-expanded', 'false')
     })
-
-    it('[P1] should have aria-label and role="status" on verification badge', () => {
-      renderRepoCard({ relays: ['wss://r1', 'wss://r2', 'wss://r3'] })
-
-      const badge = screen.getByText('Verified on 3 relays')
-      expect(badge).toHaveAttribute('aria-label', 'Verified on 3 relays')
-      expect(badge).toHaveAttribute('role', 'status')
-    })
   })
 
   describe('Graceful Rendering with Missing Fields', () => {
@@ -389,7 +421,6 @@ describe('RepoCard', () => {
     it('[P1] should hide maintainers section when maintainers array is empty', () => {
       renderRepoCard({ maintainers: [] })
 
-      // No maintainer elements should be rendered; UsersIcon should not appear
       expect(screen.queryByText(/maintainer/i)).not.toBeInTheDocument()
     })
 
@@ -399,7 +430,7 @@ describe('RepoCard', () => {
       expect(screen.queryByLabelText('Copy URL')).not.toBeInTheDocument()
     })
 
-    it('[P1] should hide verification badge when relays is empty', () => {
+    it('[P1] should hide verification badge when relayMeta is not provided', () => {
       renderRepoCard({ relays: [] })
 
       expect(screen.queryByText(/verified on/i)).not.toBeInTheDocument()
@@ -481,32 +512,32 @@ describe('RepoCard', () => {
   })
 
   describe('Verification Badge - Boundary Values (R2.2-5)', () => {
-    it('[P1] should display yellow badge for exactly 3 relays', () => {
-      renderRepoCard({
-        relays: ['wss://r1', 'wss://r2', 'wss://r3'],
+    it('[P1] should display green badge for 5 of 5 relays (100%)', () => {
+      const meta = createRelayQueryMeta({
+        results: Array.from({ length: 5 }, (_, i) =>
+          createRelayResult({ url: `wss://r${i + 1}` })
+        ),
+        respondedCount: 5,
+        totalCount: 5,
       })
 
-      const badge = screen.getByText('Verified on 3 relays')
-      expect(badge).toBeInTheDocument()
-      expect(badge.className).toContain('border-yellow-600')
-      expect(badge.className).toContain('text-yellow-600')
-    })
+      renderRepoCard({}, meta)
 
-    it('[P1] should display green badge for 5+ relays', () => {
-      renderRepoCard({
-        relays: ['wss://r1', 'wss://r2', 'wss://r3', 'wss://r4', 'wss://r5'],
-      })
-
-      const badge = screen.getByText('Verified on 5 relays')
-      expect(badge).toBeInTheDocument()
+      const badge = screen.getByText('Verified on 5 of 5 relays')
       expect(badge.className).toContain('border-green-600')
-      expect(badge.className).toContain('text-green-600')
     })
 
     it('[P2] should use outline variant on verification badge (AC #6)', () => {
-      const { container } = renderRepoCard({
-        relays: ['wss://r1', 'wss://r2'],
+      const meta = createRelayQueryMeta({
+        results: [
+          createRelayResult({ url: 'wss://r1' }),
+          createRelayResult({ url: 'wss://r2' }),
+        ],
+        respondedCount: 2,
+        totalCount: 2,
       })
+
+      const { container } = renderRepoCard({}, meta)
 
       // The Badge component with variant="outline" renders a data-slot="badge"
       const badge = container.querySelector('[data-slot="badge"]')
@@ -656,21 +687,6 @@ describe('RepoCard', () => {
 
       expect(screen.getByText('single-maintainer')).toBeInTheDocument()
       expect(screen.queryByText(/more/)).not.toBeInTheDocument()
-    })
-  })
-
-  describe('Verification Badge - Singular/Plural Text (AC #6)', () => {
-    it('[P1] should use singular "relay" for 1 relay', () => {
-      renderRepoCard({ relays: ['wss://r1'] })
-
-      expect(screen.getByText('Verified on 1 relay')).toBeInTheDocument()
-      expect(screen.queryByText('Verified on 1 relays')).not.toBeInTheDocument()
-    })
-
-    it('[P1] should use plural "relays" for 2+ relays', () => {
-      renderRepoCard({ relays: ['wss://r1', 'wss://r2'] })
-
-      expect(screen.getByText('Verified on 2 relays')).toBeInTheDocument()
     })
   })
 })

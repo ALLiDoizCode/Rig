@@ -58,7 +58,7 @@ development_status:
   2-2-repository-card-component-with-metadata: done
   2-3-client-side-search-and-filtering: done
   2-4-repository-detail-page: done
-  2-5-relay-status-indicators: backlog
+  2-5-relay-status-indicators: done
   2-6-real-time-repository-updates: backlog
   epic-2-retrospective: optional
 

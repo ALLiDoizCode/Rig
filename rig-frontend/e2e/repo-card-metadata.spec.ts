@@ -334,7 +334,7 @@ test.describe('RepoCard - Verification Badge', () => {
       const ariaLabel = await badge.getAttribute('aria-label')
       if (ariaLabel && /verified on/i.test(ariaLabel)) {
         await expect(badge).toBeVisible()
-        await expect(badge).toContainText(/Verified on \d+ relay/)
+        await expect(badge).toContainText(/Verified on \d+ of \d+ relay/)
         break
       }
     }
@@ -351,7 +351,7 @@ test.describe('RepoCard - Verification Badge', () => {
       const badge = badges.nth(i)
       const ariaLabel = await badge.getAttribute('aria-label')
       if (ariaLabel && /verified on/i.test(ariaLabel)) {
-        expect(ariaLabel).toMatch(/Verified on \d+ relays?/)
+        expect(ariaLabel).toMatch(/Verified on \d+ of \d+ relays?/)
         break
       }
     }
@@ -794,15 +794,17 @@ test.describe('RepoCard - Badge Color Variants', () => {
       if (ariaLabel && /verified on/i.test(ariaLabel)) {
         const className = await badge.getAttribute('class') ?? ''
         // Extract relay count from aria-label
-        const match = ariaLabel.match(/Verified on (\d+) relays?/)
+        const match = ariaLabel.match(/Verified on (\d+) of (\d+) relays?/)
         if (match) {
-          const relayCount = parseInt(match[1], 10)
+          const responded = parseInt(match[1], 10)
+          const total = parseInt(match[2], 10)
+          const ratio = responded / total
 
-          if (relayCount >= 4) {
+          if (ratio >= 0.8) {
             expect(className).toContain('text-green-600')
-          } else if (relayCount >= 2) {
+          } else if (ratio >= 0.4) {
             expect(className).toContain('text-yellow-600')
-          } else if (relayCount === 1) {
+          } else {
             expect(className).toContain('text-orange-600')
           }
         }

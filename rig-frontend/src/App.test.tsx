@@ -8,6 +8,10 @@ import { ThemeProvider } from './contexts/ThemeContext'
 // Mock the Nostr service layer so Home page tests don't make real relay calls
 vi.mock('@/lib/nostr', () => ({
   fetchRepositories: vi.fn().mockResolvedValue([]),
+  fetchRepositoriesWithMeta: vi.fn().mockResolvedValue({
+    repositories: [],
+    meta: { results: [], queriedAt: 0, respondedCount: 0, totalCount: 0 },
+  }),
 }))
 
 // Fresh QueryClient per test to prevent cache leaks

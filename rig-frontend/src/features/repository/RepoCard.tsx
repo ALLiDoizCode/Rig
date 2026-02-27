@@ -6,50 +6,26 @@
  * verification badge, ArNS URL with copy, and topic tags.
  *
  * Story 2.2: Repository Card Component with Metadata
+ * Story 2.5: Relay Status Indicators (RelayStatusBadge integration)
  */
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { Link } from 'react-router'
 import { Card, CardHeader, CardContent, CardFooter } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { RelayStatusBadge } from '@/components/RelayStatusBadge'
 import { buildRepoPath } from '@/constants/routes'
 import { truncatePubkey, formatRelativeTime } from '@/lib/format'
 import type { Repository } from '@/types/repository'
+import type { RelayQueryMeta } from '@/types/relay-status'
 import { CopyIcon, CheckIcon, UsersIcon, ClockIcon, ExternalLinkIcon } from 'lucide-react'
 
 interface RepoCardProps {
   repo: Repository
+  /** Relay query metadata (global, not per-repo). When undefined, badge is not rendered. */
+  relayMeta?: RelayQueryMeta
 }
 
-/**
- * Determine verification badge styling based on relay count.
- */
-function getRelayBadgeVariant(relayCount: number): {
-  className: string
-  label: string
-} {
-  if (relayCount >= 4) {
-    return {
-      className: 'border-green-600 text-green-600 dark:border-green-400 dark:text-green-400',
-      label: `Verified on ${relayCount} relays`,
-    }
-  }
-  if (relayCount >= 2) {
-    return {
-      className: 'border-yellow-600 text-yellow-600 dark:border-yellow-400 dark:text-yellow-400',
-      label: `Verified on ${relayCount} relays`,
-    }
-  }
-  if (relayCount === 1) {
-    return {
-      className: 'border-orange-600 text-orange-600 dark:border-orange-400 dark:text-orange-400',
-      label: 'Verified on 1 relay',
-    }
-  }
-  return { className: '', label: '' }
-}
-
-export function RepoCard({ repo }: RepoCardProps) {
+export function RepoCard({ repo, relayMeta }: RepoCardProps) {
   const [isExpanded, setIsExpanded] = useState(false)
   const [isTruncated, setIsTruncated] = useState(false)
   const [copied, setCopied] = useState(false)
@@ -99,7 +75,6 @@ export function RepoCard({ repo }: RepoCardProps) {
   }, [])
 
   const repoPath = buildRepoPath(repo.owner, repo.id)
-  const relayBadge = getRelayBadgeVariant(repo.relays.length)
   const arnsUrl = repo.webUrls.length > 0 ? repo.webUrls[0] : null
 
   return (
@@ -220,15 +195,8 @@ export function RepoCard({ repo }: RepoCardProps) {
           <p className="text-xs text-muted-foreground font-mono truncate">
             {truncatePubkey(repo.owner)}
           </p>
-          {repo.relays.length > 0 && (
-            <Badge
-              variant="outline"
-              className={relayBadge.className}
-              role="status"
-              aria-label={relayBadge.label}
-            >
-              {relayBadge.label}
-            </Badge>
+          {relayMeta && (
+            <RelayStatusBadge meta={relayMeta} variant="compact" />
           )}
         </CardFooter>
       </Card>

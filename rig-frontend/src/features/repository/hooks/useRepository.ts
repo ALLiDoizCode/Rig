@@ -10,17 +10,22 @@
  * redundant network call. If the list cache is empty or the repo is not found
  * in it, the queryFn fetches fresh data from relays.
  *
+ * The queryFn uses fetchRepositoriesWithMeta() and writes relay metadata to
+ * the cache as a side effect, ensuring the RelayStatusBadge on the detail page
+ * has fresh data even when navigating directly to a repo URL.
+ *
  * Story 2.4: Repository Detail Page
+ * Story 2.5: Relay Status Indicators (relay metadata caching)
  */
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { fetchRepositories } from '@/lib/nostr'
-import { repositoryKeys } from '@/lib/query-client'
+import { fetchRepositoriesWithMeta } from '@/lib/nostr'
+import { repositoryKeys, relayStatusKeys } from '@/lib/query-client'
 import type { Repository } from '@/types/repository'
 
 /**
  * Hook to fetch a single repository by owner and id.
  *
- * Uses fetchRepositories() and filters for the matching repo.
+ * Uses fetchRepositoriesWithMeta() and filters for the matching repo.
  * TanStack Query caching (staleTime: 1 hour) prevents redundant
  * network calls when navigating from the list page. Additionally,
  * checks the list cache (repositoryKeys.all()) for initialData so
@@ -36,8 +41,12 @@ export function useRepository(owner: string, repoId: string) {
   return useQuery<Repository | null>({
     queryKey: repositoryKeys.detail(repoId),
     queryFn: async () => {
-      const repos = await fetchRepositories()
-      return repos.find((r) => r.owner === owner && r.id === repoId) ?? null
+      const { repositories, meta } = await fetchRepositoriesWithMeta()
+      // Write relay metadata to separate cache key as a side effect
+      // (same pattern as useRepositories) so RepoDetail's RelayStatusBadge
+      // shows correct data even when navigating directly to a detail page
+      queryClient.setQueryData(relayStatusKeys.all(), meta)
+      return repositories.find((r) => r.owner === owner && r.id === repoId) ?? null
     },
     initialData: () => {
       const cachedRepos = queryClient.getQueryData<Repository[]>(

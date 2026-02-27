@@ -1,24 +1,26 @@
 /**
  * useRepositories - TanStack Query hook for fetching repository announcements
  *
- * Wraps fetchRepositories() from the Nostr service layer with TanStack Query
+ * Wraps fetchRepositoriesWithMeta() from the Nostr service layer with TanStack Query
  * for caching, automatic retries, and stale-while-revalidate behavior.
  *
  * This is the reference pattern for ALL future data-fetching hooks in the app.
  *
  * Key design decisions:
- * - queryFn uses arrow wrapper to prevent QueryFunctionContext from being
- *   passed as the `limit` argument to fetchRepositories()
+ * - queryFn uses fetchRepositoriesWithMeta() to get both repositories and relay metadata
+ * - Relay metadata is written to a separate cache key (relayStatusKeys.all()) as a side effect
+ * - The query data type remains Repository[] (preserving existing return type)
  * - select uses deduplicateRepositories to transform cached data on read,
  *   keeping raw relay data intact in the cache
  * - staleTime matches CACHE_TTL_REPOSITORY (1 hour)
  * - Retries handled by global queryClient config (3 attempts, exponential backoff)
  *
  * Story 2.1: Repository List Page with Nostr Query
+ * Story 2.5: Relay Status Indicators (fetchRepositoriesWithMeta + relay metadata caching)
  */
-import { useQuery } from '@tanstack/react-query'
-import { fetchRepositories } from '@/lib/nostr'
-import { repositoryKeys } from '@/lib/query-client'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { fetchRepositoriesWithMeta } from '@/lib/nostr'
+import { repositoryKeys, relayStatusKeys } from '@/lib/query-client'
 import type { Repository } from '@/types/repository'
 
 /**
@@ -45,15 +47,26 @@ export function deduplicateRepositories(repos: Repository[]): Repository[] {
 /**
  * Hook to fetch and cache repository announcements from Nostr relays.
  *
+ * Internally calls fetchRepositoriesWithMeta() and writes relay metadata
+ * to a separate cache key (relayStatusKeys.all()) as a side effect.
+ * The return type remains unchanged: TanStack Query result with Repository[].
+ *
  * Returns TanStack Query result with { data, status, error, refetch }.
  * Use `status` field for state checks (not isLoading/isError).
  *
  * @returns TanStack Query result with deduplicated Repository array
  */
 export function useRepositories() {
+  const queryClient = useQueryClient()
+
   return useQuery({
     queryKey: repositoryKeys.all(),
-    queryFn: () => fetchRepositories(),
+    queryFn: async () => {
+      const { repositories, meta } = await fetchRepositoriesWithMeta()
+      // Write relay metadata to separate cache key as a side effect
+      queryClient.setQueryData(relayStatusKeys.all(), meta)
+      return repositories
+    },
     select: deduplicateRepositories,
     staleTime: 60 * 60 * 1000, // 1 hour for repositories
   })

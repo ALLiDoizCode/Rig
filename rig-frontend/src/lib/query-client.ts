@@ -107,6 +107,25 @@ export const repositoryKeys = {
 }
 
 /**
+ * Query key factory for relay status metadata.
+ *
+ * Relay metadata is stored in a separate cache key from repository data.
+ * Updated as a side effect when useRepositories fetches data via
+ * fetchRepositoriesWithMeta(). Read passively by useRelayStatus hook.
+ *
+ * @example
+ * // Write relay metadata to cache
+ * queryClient.setQueryData(relayStatusKeys.all(), meta)
+ *
+ * // Read relay metadata from cache
+ * useQuery({ queryKey: relayStatusKeys.all(), enabled: false })
+ */
+export const relayStatusKeys = {
+  /** Key for relay status metadata */
+  all: () => ['relay-status'] as const,
+}
+
+/**
  * Query key factory for issue queries.
  *
  * Issues are scoped by repository ID for efficient cache invalidation.

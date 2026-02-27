@@ -25,6 +25,7 @@ import {
   eventToComment
 } from '@/lib/transformers'
 import type { Repository } from '@/types/repository'
+import type { RelayResult, RelayQueryMeta } from '@/types/relay-status'
 import type { Issue, Comment } from '@/types/issue'
 import type { PullRequest } from '@/types/pull-request'
 import type { Patch } from '@/types/patch'
@@ -75,6 +76,103 @@ async function queryEvents(
       context: { relays: DEFAULT_RELAYS, filter }
     } as RigError
   }
+}
+
+/**
+ * Query events from Nostr relays individually with per-relay metadata tracking.
+ *
+ * Unlike queryEvents() which races all relays together, this function queries
+ * each relay individually in parallel to record per-relay timing, success/failure,
+ * and event counts. Results are deduplicated by event ID across relays.
+ *
+ * @param filter - Nostr event filter (kind, tags, etc.)
+ * @param timeout - Query timeout in milliseconds (default: 2000ms per NFR-P8)
+ * @returns Object with merged events and per-relay metadata
+ * @throws RigError with code 'RELAY_TIMEOUT' when ALL relays fail
+ */
+async function queryEventsWithMeta(
+  filter: Filter,
+  timeout = 2000
+): Promise<{ events: NostrEvent[]; meta: RelayQueryMeta }> {
+  const relays = [...DEFAULT_RELAYS]
+  const startTime = Date.now()
+
+  const results = await Promise.allSettled(
+    relays.map(async (url) => {
+      const relayStart = Date.now()
+      try {
+        const events = await pool.querySync([url], filter, { maxWait: timeout })
+        // Signature verification per NFR-S1 (same as queryEvents)
+        const verified = events.filter((event: NostrEvent) => {
+          const isValid = verifyEvent(event)
+          if (!isValid) console.warn('Invalid signature rejected:', event.id)
+          return isValid
+        })
+        return {
+          url,
+          status: 'success' as const,
+          latencyMs: Date.now() - relayStart,
+          eventCount: verified.length,
+          events: verified,
+        }
+      } catch (err) {
+        return {
+          url,
+          status: 'failed' as const,
+          latencyMs: Date.now() - relayStart,
+          eventCount: 0,
+          events: [] as NostrEvent[],
+          error: err instanceof Error ? err.message : 'Unknown error',
+        }
+      }
+    })
+  )
+
+  // Merge results, deduplicating events by event ID
+  const relayResults: RelayResult[] = []
+  const allEvents: NostrEvent[] = []
+  const seenIds = new Set<string>()
+
+  for (const result of results) {
+    const value = result.status === 'fulfilled' ? result.value : null
+    if (!value) continue
+    relayResults.push({
+      url: value.url,
+      status: value.status,
+      latencyMs: value.latencyMs,
+      eventCount: value.eventCount,
+      error: value.error,
+    })
+    if (value.status === 'success') {
+      for (const event of value.events) {
+        if (!seenIds.has(event.id)) {
+          seenIds.add(event.id)
+          allEvents.push(event)
+        }
+      }
+    }
+  }
+
+  const respondedCount = relayResults.filter(r => r.status === 'success').length
+
+  // If ALL relays failed, throw RigError (same behavior as queryEvents)
+  if (respondedCount === 0) {
+    throw {
+      code: 'RELAY_TIMEOUT',
+      message: `All ${relays.length} relays failed`,
+      userMessage: 'Unable to connect to Nostr relays. Please try again.',
+      context: { relays, filter }
+    } as RigError
+  }
+
+  const meta: RelayQueryMeta = {
+    results: relayResults,
+    queriedAt: Math.floor(startTime / 1000),
+    respondedCount,
+    totalCount: relays.length,
+  }
+
+  return { events: allEvents, meta }
 }
 
 /**
@@ -136,6 +234,26 @@ function validateAndTransform<TSchema, TModel>(
 export async function fetchRepositories(limit = 100): Promise<Repository[]> {
   const events = await queryEvents({ kinds: [REPO_ANNOUNCEMENT], limit })
   return validateAndTransform(events, RepoAnnouncementEventSchema, eventToRepository, 'Repository')
+}
+
+/**
+ * Fetch repository announcements (kind 30617) with per-relay metadata.
+ *
+ * Queries each relay individually to track response status and latency.
+ * Returns both the repository list and relay query metadata for the
+ * relay status indicator components.
+ *
+ * @param limit - Maximum number of repositories to fetch (default: 100)
+ * @returns Object with repositories array and relay query metadata
+ * @throws RigError with code 'RELAY_TIMEOUT' or 'VALIDATION_FAILED'
+ */
+export async function fetchRepositoriesWithMeta(limit = 100): Promise<{
+  repositories: Repository[]
+  meta: RelayQueryMeta
+}> {
+  const { events, meta } = await queryEventsWithMeta({ kinds: [REPO_ANNOUNCEMENT], limit })
+  const repositories = validateAndTransform(events, RepoAnnouncementEventSchema, eventToRepository, 'Repository')
+  return { repositories, meta }
 }
 
 /**

@@ -13,9 +13,11 @@
  * Story 2.1: Repository List Page with Nostr Query
  * Story 2.2: Repository Card Component with Metadata (RepoCard integration)
  * Story 2.3: Client-Side Search and Filtering
+ * Story 2.5: Relay Status Indicators (relay metadata passed to RepoCard)
  */
 import { useState, useEffect, useRef } from 'react'
 import { useRepositories } from '@/features/repository/hooks/useRepositories'
+import { useRelayStatus } from '@/features/repository/hooks/useRelayStatus'
 import { RepoCard } from '@/features/repository/RepoCard'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Button } from '@/components/ui/button'
@@ -65,6 +67,7 @@ function RepositoryGridSkeleton() {
 
 export function Component() {
   const { data, status, error, refetch } = useRepositories()
+  const { meta: relayMeta } = useRelayStatus()
 
   // Search state: raw input value (instant) and debounced filter term (delayed)
   const [searchTerm, setSearchTerm] = useState('')
@@ -201,7 +204,7 @@ export function Component() {
           {filteredData.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
               {filteredData.map((repo) => (
-                <RepoCard key={repo.id} repo={repo} />
+                <RepoCard key={repo.id} repo={repo} relayMeta={relayMeta} />
               ))}
             </div>
           ) : (
