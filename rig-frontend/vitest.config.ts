@@ -8,6 +8,7 @@ export default defineConfig({
     globals: true,
     environment: 'happy-dom',
     setupFiles: './src/test-utils/setup.ts',
+    exclude: ['node_modules', 'dist', 'e2e'],
   },
   resolve: {
     alias: {

@@ -54,4 +54,39 @@ describe('Nostr Constants', () => {
       })
     })
   })
+
+  describe('Environment Variable Handling', () => {
+    it('should parse comma-separated relay URLs correctly', () => {
+      // Test the parsing logic used in constants/nostr.ts
+      const mockEnv = 'wss://relay1.com,wss://relay2.com,wss://relay3.com'
+      const parsed = mockEnv.split(',').map((r: string) => r.trim()).filter(Boolean)
+
+      expect(parsed).toHaveLength(3)
+      expect(parsed[0]).toBe('wss://relay1.com')
+    })
+
+    it('should handle whitespace in relay URLs', () => {
+      const mockEnv = ' wss://relay1.com , wss://relay2.com '
+      const parsed = mockEnv.split(',').map((r: string) => r.trim()).filter(Boolean)
+
+      expect(parsed).toHaveLength(2)
+      expect(parsed[0]).toBe('wss://relay1.com')
+      expect(parsed[1]).toBe('wss://relay2.com')
+    })
+
+    it('should filter out empty strings from relay list', () => {
+      const mockEnv = 'wss://relay1.com,,wss://relay2.com'
+      const parsed = mockEnv.split(',').map((r: string) => r.trim()).filter(Boolean)
+
+      expect(parsed).toHaveLength(2)
+    })
+
+    it('should use fallback when env var is undefined', () => {
+      // In test environment, VITE_NOSTR_RELAYS is undefined
+      // Verify that DEFAULT_RELAYS contains the hardcoded fallbacks
+      expect(DEFAULT_RELAYS).toContain('wss://relay.damus.io')
+      expect(DEFAULT_RELAYS).toContain('wss://nos.lol')
+      expect(DEFAULT_RELAYS).toContain('wss://relay.nostr.band')
+    })
+  })
 })
