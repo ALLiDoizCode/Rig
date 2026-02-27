@@ -1,0 +1,3 @@
+[     991ms] [WARNING] cdn.tailwindcss.com should not be used in production. To use Tailwind CSS in production, install it as a PostCSS plugin or use the Tailwind CLI: https://tailwindcss.com/docs/installation @ https://cdn.tailwindcss.com/:63
+[    1118ms] [WARNING] You are using the in-browser Babel transformer. Be sure to precompile your scripts for production - https://babeljs.io/docs/setup/ @ https://unpkg.com/@babel/standalone/babel.min.js:2
+[    1481ms] [ERROR] Failed to load resource: the server responded with a status of 404 (File not found) @ http://localhost:8889/favicon.ico:0

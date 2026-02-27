@@ -46,14 +46,14 @@ const pool = new SimplePool({
  * @param filter - Nostr event filter (kind, tags, etc.)
  * @param timeout - Query timeout in milliseconds (default: 2000ms per NFR-P8)
  * @returns Validated NostrEvent array
- * @throws RigError with code 'RELAY_TIMEOUT' or 'SIGNATURE_INVALID'
+ * @throws RigError with code 'RELAY_TIMEOUT'
  */
 async function queryEvents(
   filter: Filter,
   timeout = 2000
 ): Promise<NostrEvent[]> {
   try {
-    const events = await pool.querySync(DEFAULT_RELAYS, filter, { maxWait: timeout })
+    const events = await pool.querySync([...DEFAULT_RELAYS], filter, { maxWait: timeout })
 
     // Signature validation (NFR-S1)
     const validatedEvents = events.filter((event: NostrEvent) => {
@@ -190,4 +190,18 @@ export async function fetchPatches(repoId: string, limit = 50): Promise<Patch[]>
 export async function fetchComments(eventId: string, limit = 100): Promise<Comment[]> {
   const events = await queryEvents({ kinds: [COMMENT], '#e': [eventId], limit })
   return validateAndTransform(events, CommentEventSchema, eventToComment, 'Comment')
+}
+
+/**
+ * Destroy the shared SimplePool instance and close all WebSocket connections.
+ *
+ * Call this during application teardown (e.g., in a React useEffect cleanup or
+ * when the app unmounts) to ensure all relay connections are properly closed.
+ *
+ * After calling this function, any subsequent fetch calls will fail because
+ * the pool instance is a module-level singleton. This is intentional — the
+ * function is meant for final cleanup only.
+ */
+export function destroyPool(): void {
+  pool.close([...DEFAULT_RELAYS])
 }

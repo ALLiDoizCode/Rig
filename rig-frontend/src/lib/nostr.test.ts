@@ -8,8 +8,8 @@ const mockPoolInstance = {
   close: vi.fn()
 }
 
-let poolConstructorArgs: any = null
-const MockSimplePool = vi.fn(function(this: any, options: any) {
+let poolConstructorArgs: Record<string, unknown> | null = null
+const MockSimplePool = vi.fn(function(this: unknown, options: Record<string, unknown>) {
   poolConstructorArgs = options
   return mockPoolInstance
 })
@@ -23,7 +23,7 @@ vi.mock('nostr-tools/pure', () => ({
 }))
 
 // Import after mocks
-const { fetchRepositories, fetchIssues, fetchPullRequests, fetchPatches, fetchComments } = await import('./nostr')
+const { fetchRepositories, fetchIssues, fetchPullRequests, fetchPatches, fetchComments, destroyPool } = await import('./nostr')
 const { verifyEvent } = await import('nostr-tools/pure')
 
 describe('Nostr Service Layer', () => {
@@ -41,6 +41,16 @@ describe('Nostr Service Layer', () => {
         enableReconnect: true,
         enablePing: true
       })
+    })
+  })
+
+  describe('destroyPool', () => {
+    it('should call pool.close with DEFAULT_RELAYS', () => {
+      destroyPool()
+
+      expect(mockPoolInstance.close).toHaveBeenCalledWith(
+        expect.arrayContaining(['wss://relay.damus.io', 'wss://nos.lol', 'wss://relay.nostr.band'])
+      )
     })
   })
 
@@ -176,11 +186,12 @@ describe('Nostr Service Layer', () => {
       try {
         await fetchRepositories()
         expect.fail('Should have thrown error')
-      } catch (err: any) {
-        expect(err.code).toBe('RELAY_TIMEOUT')
-        expect(err.message).toContain('Connection failed')
-        expect(err.userMessage).toBeTruthy()
-        expect(err.context).toHaveProperty('relays')
+      } catch (err: unknown) {
+        const rigErr = err as { code: string; message: string; userMessage: string; context: Record<string, unknown> }
+        expect(rigErr.code).toBe('RELAY_TIMEOUT')
+        expect(rigErr.message).toContain('Connection failed')
+        expect(rigErr.userMessage).toBeTruthy()
+        expect(rigErr.context).toHaveProperty('relays')
       }
     })
 
@@ -222,7 +233,7 @@ describe('Nostr Service Layer', () => {
     })
 
     it('should filter out events that fail Zod refine validation', async () => {
-      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+      vi.spyOn(console, 'warn').mockImplementation(() => {})
       // Empty 'd' tag value fails the Zod refine check (tag[1] is falsy),
       // so this is caught by the try-catch and filtered out
       const mockEvents: NostrEvent[] = [
@@ -257,7 +268,7 @@ describe('Nostr Service Layer', () => {
     })
 
     it('should throw VALIDATION_FAILED when ALL events fail Zod validation', async () => {
-      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+      vi.spyOn(console, 'warn').mockImplementation(() => {})
       const mockEvents: NostrEvent[] = [
         {
           id: '1',

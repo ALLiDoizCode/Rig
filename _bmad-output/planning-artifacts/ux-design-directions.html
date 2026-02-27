@@ -1,0 +1,1106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rig - Design Direction Explorations</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Berkeley+Mono:wght@400;700&family=Crimson+Pro:wght@400;600&family=DM+Serif+Display&family=Righteous&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0a0a0a;
+            color: #fff;
+            overflow-x: hidden;
+        }
+        .showcase-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(800px, 1fr));
+            gap: 60px;
+            padding: 60px 40px;
+            max-width: 1800px;
+            margin: 0 auto;
+        }
+        .direction-container {
+            background: #111;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid #222;
+        }
+        .direction-header {
+            padding: 24px;
+            border-bottom: 1px solid #222;
+            background: linear-gradient(to bottom, #1a1a1a, #111);
+        }
+        .direction-title {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        .direction-description {
+            font-size: 14px;
+            color: #888;
+            line-height: 1.6;
+        }
+        .direction-canvas {
+            padding: 40px;
+            min-height: 600px;
+        }
+
+        /* Direction-specific styles */
+        .technical-transparency {
+            font-family: 'JetBrains Mono', monospace;
+            background: #0d1117;
+        }
+        .technical-transparency .direction-canvas {
+            background: #010409;
+            border-top: 2px solid #30363d;
+        }
+
+        .github-evolved .direction-canvas {
+            background: #0d1117;
+        }
+
+        .minimal-trust .direction-canvas {
+            background: linear-gradient(135deg, #fafafa 0%, #f0f0f0 100%);
+            color: #000;
+        }
+
+        .p2p-network .direction-canvas {
+            background: radial-gradient(circle at 20% 50%, rgba(59, 130, 246, 0.1) 0%, transparent 50%),
+                        radial-gradient(circle at 80% 50%, rgba(168, 85, 247, 0.1) 0%, transparent 50%),
+                        #0a0a0a;
+        }
+
+        .progressive-disclosure .direction-canvas {
+            background: #ffffff;
+            color: #0a0a0a;
+        }
+
+        .ecosystem-native .direction-canvas {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            position: relative;
+            overflow: hidden;
+        }
+        .ecosystem-native .direction-canvas::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background:
+                radial-gradient(circle at 10% 20%, rgba(255, 255, 255, 0.1) 0%, transparent 20%),
+                radial-gradient(circle at 90% 80%, rgba(255, 255, 255, 0.05) 0%, transparent 20%);
+            pointer-events: none;
+        }
+
+        .data-first-table {
+            font-family: 'Berkeley Mono', 'JetBrains Mono', monospace;
+        }
+        .data-first-table .direction-canvas {
+            background: #fafafa;
+            color: #000;
+            padding: 0;
+        }
+
+        .mobile-first-cards .direction-canvas {
+            background: linear-gradient(to bottom, #f8f9fa, #e9ecef);
+            color: #000;
+        }
+    </style>
+</head>
+<body>
+    <div style="text-align: center; padding: 80px 40px 40px;">
+        <h1 style="font-size: 48px; font-weight: 800; margin-bottom: 16px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
+            Rig Design Directions
+        </h1>
+        <p style="font-size: 18px; color: #888; max-width: 800px; margin: 0 auto;">
+            Eight distinct visual approaches for the decentralized git hosting platform.<br/>
+            Each direction uses shadcn/ui v4 components with unique aesthetic treatments.
+        </p>
+    </div>
+
+    <div class="showcase-grid">
+        <div id="direction-1"></div>
+        <div id="direction-2"></div>
+        <div id="direction-3"></div>
+        <div id="direction-4"></div>
+        <div id="direction-5"></div>
+        <div id="direction-6"></div>
+        <div id="direction-7"></div>
+        <div id="direction-8"></div>
+    </div>
+
+    <script type="text/babel">
+        const { useState } = React;
+
+        // Shadcn-inspired components with Tailwind classes
+        const Card = ({ children, className = "" }) => (
+            <div className={`rounded-lg border bg-card text-card-foreground shadow-sm ${className}`}>
+                {children}
+            </div>
+        );
+
+        const CardHeader = ({ children, className = "" }) => (
+            <div className={`flex flex-col space-y-1.5 p-6 ${className}`}>{children}</div>
+        );
+
+        const CardTitle = ({ children, className = "" }) => (
+            <h3 className={`text-2xl font-semibold leading-none tracking-tight ${className}`}>{children}</h3>
+        );
+
+        const CardDescription = ({ children, className = "" }) => (
+            <p className={`text-sm text-muted-foreground ${className}`}>{children}</p>
+        );
+
+        const CardContent = ({ children, className = "" }) => (
+            <div className={`p-6 pt-0 ${className}`}>{children}</div>
+        );
+
+        const Badge = ({ children, variant = "default", className = "" }) => {
+            const variants = {
+                default: "bg-primary text-primary-foreground hover:bg-primary/80",
+                secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80",
+                destructive: "bg-destructive text-destructive-foreground hover:bg-destructive/80",
+                outline: "text-foreground border border-input bg-background hover:bg-accent hover:text-accent-foreground"
+            };
+            return (
+                <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold transition-colors ${variants[variant]} ${className}`}>
+                    {children}
+                </span>
+            );
+        };
+
+        const Button = ({ children, variant = "default", className = "", ...props }) => {
+            const variants = {
+                default: "bg-primary text-primary-foreground hover:bg-primary/90",
+                outline: "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
+                ghost: "hover:bg-accent hover:text-accent-foreground"
+            };
+            return (
+                <button className={`inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 disabled:pointer-events-none disabled:opacity-50 h-10 px-4 py-2 ${variants[variant]} ${className}`} {...props}>
+                    {children}
+                </button>
+            );
+        };
+
+        // Direction 1: Technical Transparency
+        const TechnicalTransparency = () => (
+            <div className="direction-container technical-transparency">
+                <div className="direction-header">
+                    <div className="direction-title" style={{ fontFamily: 'JetBrains Mono, monospace' }}>1. Technical Transparency</div>
+                    <div className="direction-description">DevTools-inspired interface with visible system state and relay connections</div>
+                </div>
+                <div className="direction-canvas" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
+                    <div style={{ background: '#161b22', border: '1px solid #30363d', borderRadius: '6px', padding: '12px 16px', marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div style={{ display: 'flex', gap: '16px', fontSize: '12px', color: '#8b949e' }}>
+                            <span style={{ color: '#58a6ff' }}>● wss://relay.nostr.band</span>
+                            <span style={{ color: '#58a6ff' }}>● wss://nos.lol</span>
+                            <span style={{ color: '#58a6ff' }}>● wss://relay.damus.io</span>
+                            <span style={{ color: '#f85149' }}>● wss://relay.snort.social</span>
+                            <span style={{ color: '#58a6ff' }}>● wss://nostr.wine</span>
+                        </div>
+                        <div style={{ fontSize: '12px', color: '#8b949e' }}>
+                            4/5 relays • 23ms avg
+                        </div>
+                    </div>
+
+                    <Card style={{ background: '#0d1117', border: '1px solid #30363d', color: '#c9d1d9', marginBottom: '12px' }}>
+                        <CardContent style={{ padding: '16px' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '12px' }}>
+                                <div style={{ flex: 1 }}>
+                                    <div style={{ fontSize: '16px', fontWeight: '600', marginBottom: '4px', color: '#58a6ff' }}>
+                                        bitcoin/bitcoin
+                                    </div>
+                                    <div style={{ fontSize: '12px', color: '#8b949e', fontFamily: 'monospace' }}>
+                                        npub1a2cww4kn9wqte4ry70vyfwqyqvpswksn76pftd8klm7hnxf3vfq3ktyra
+                                    </div>
+                                </div>
+                                <div style={{ display: 'flex', gap: '8px', fontSize: '11px' }}>
+                                    <Badge variant="outline" style={{ background: '#161b22', border: '1px solid #30363d', color: '#58a6ff' }}>
+                                        ✓ SIG_OK
+                                    </Badge>
+                                    <Badge variant="outline" style={{ background: '#161b22', border: '1px solid #30363d', color: '#3fb950' }}>
+                                        AR_STORED
+                                    </Badge>
+                                </div>
+                            </div>
+                            <div style={{ fontSize: '13px', color: '#8b949e', marginBottom: '12px' }}>
+                                Bitcoin Core integration/staging tree
+                            </div>
+                            <div style={{ display: 'flex', gap: '16px', fontSize: '12px', color: '#8b949e' }}>
+                                <span>⭐ 79.2k</span>
+                                <span>🔱 38.4k</span>
+                                <span>📦 C++ • MIT</span>
+                                <span style={{ color: '#3fb950' }}>↑ 15m ago</span>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    <Card style={{ background: '#0d1117', border: '1px solid #30363d', color: '#c9d1d9' }}>
+                        <CardContent style={{ padding: '16px' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '12px' }}>
+                                <div style={{ flex: 1 }}>
+                                    <div style={{ fontSize: '16px', fontWeight: '600', marginBottom: '4px', color: '#58a6ff' }}>
+                                        nostr-protocol/nips
+                                    </div>
+                                    <div style={{ fontSize: '12px', color: '#8b949e', fontFamily: 'monospace' }}>
+                                        npub19mun7qwdyjf7qs3456tnxypwtqmwkh5buw4xp7hzz5wc7p3hestqnq0j7a
+                                    </div>
+                                </div>
+                                <div style={{ display: 'flex', gap: '8px', fontSize: '11px' }}>
+                                    <Badge variant="outline" style={{ background: '#161b22', border: '1px solid #30363d', color: '#58a6ff' }}>
+                                        ✓ SIG_OK
+                                    </Badge>
+                                    <Badge variant="outline" style={{ background: '#161b22', border: '1px solid #30363d', color: '#3fb950' }}>
+                                        AR_STORED
+                                    </Badge>
+                                </div>
+                            </div>
+                            <div style={{ fontSize: '13px', color: '#8b949e', marginBottom: '12px' }}>
+                                Nostr Implementation Possibilities
+                            </div>
+                            <div style={{ display: 'flex', gap: '16px', fontSize: '12px', color: '#8b949e' }}>
+                                <span>⭐ 2.1k</span>
+                                <span>🔱 456</span>
+                                <span>📦 Markdown • Public Domain</span>
+                                <span style={{ color: '#3fb950' }}>↑ 2h ago</span>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    <div style={{ marginTop: '16px', padding: '12px', background: '#161b22', border: '1px solid #30363d', borderRadius: '6px', fontSize: '11px', color: '#8b949e', fontFamily: 'monospace' }}>
+                        DEBUG: relay_pool.query(kinds=[30617]) → 2 repos • 847ms • bytes_transferred=4.2KB
+                    </div>
+                </div>
+            </div>
+        );
+
+        // Direction 2: GitHub Evolved
+        const GitHubEvolved = () => {
+            const [activeTab, setActiveTab] = useState('repositories');
+
+            return (
+                <div className="direction-container github-evolved">
+                    <div className="direction-header">
+                        <div className="direction-title">2. GitHub Evolved</div>
+                        <div className="direction-description">Familiar GitHub patterns enhanced with subtle verification and permanence indicators</div>
+                    </div>
+                    <div className="direction-canvas">
+                        <div style={{ borderBottom: '1px solid #30363d', marginBottom: '24px' }}>
+                            <div style={{ display: 'flex', gap: '0' }}>
+                                {['repositories', 'issues', 'pull-requests'].map(tab => (
+                                    <button
+                                        key={tab}
+                                        onClick={() => setActiveTab(tab)}
+                                        style={{
+                                            padding: '12px 20px',
+                                            background: 'transparent',
+                                            border: 'none',
+                                            borderBottom: activeTab === tab ? '2px solid #f78166' : '2px solid transparent',
+                                            color: activeTab === tab ? '#f0f6fc' : '#8b949e',
+                                            cursor: 'pointer',
+                                            fontSize: '14px',
+                                            fontWeight: '500',
+                                            transition: 'all 0.2s'
+                                        }}
+                                    >
+                                        {tab.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                            <input
+                                type="text"
+                                placeholder="Find a repository..."
+                                style={{
+                                    background: '#0d1117',
+                                    border: '1px solid #30363d',
+                                    borderRadius: '6px',
+                                    padding: '8px 12px',
+                                    color: '#c9d1d9',
+                                    fontSize: '14px',
+                                    width: '320px',
+                                    outline: 'none'
+                                }}
+                            />
+                            <Button variant="default" style={{ background: '#238636', color: '#fff' }}>
+                                New Repository
+                            </Button>
+                        </div>
+
+                        <Card style={{ background: '#161b22', border: '1px solid #30363d', color: '#c9d1d9', marginBottom: '16px' }}>
+                            <CardContent style={{ padding: '24px' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
+                                    <div style={{ flex: 1 }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+                                            <span style={{ fontSize: '20px', fontWeight: '600', color: '#58a6ff' }}>
+                                                bitcoin/bitcoin
+                                            </span>
+                                            <Badge style={{ background: '#1f6feb', border: 'none', color: '#fff' }}>Public</Badge>
+                                            <Badge variant="outline" style={{ background: 'transparent', border: '1px solid #3fb950', color: '#3fb950', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                                <span style={{ fontSize: '10px' }}>✓</span> Verified
+                                            </Badge>
+                                            <Badge variant="outline" style={{ background: 'transparent', border: '1px solid #bb93f0', color: '#bb93f0', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                                <span style={{ fontSize: '10px' }}>♦</span> Permanent
+                                            </Badge>
+                                        </div>
+                                        <p style={{ color: '#8b949e', fontSize: '14px', marginBottom: '16px' }}>
+                                            Bitcoin Core integration/staging tree
+                                        </p>
+                                        <div style={{ display: 'flex', gap: '20px', fontSize: '13px', color: '#8b949e' }}>
+                                            <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                                <span style={{ color: '#f85149' }}>●</span> C++
+                                            </span>
+                                            <span>⭐ 79,234</span>
+                                            <span>🔱 38,401</span>
+                                            <span>MIT license</span>
+                                            <span>Updated 15 minutes ago</span>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <Button variant="outline" style={{ background: 'transparent', border: '1px solid #30363d', color: '#c9d1d9' }}>
+                                            ★ Star
+                                        </Button>
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+
+                        <Card style={{ background: '#161b22', border: '1px solid #30363d', color: '#c9d1d9' }}>
+                            <CardContent style={{ padding: '24px' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
+                                    <div style={{ flex: 1 }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+                                            <span style={{ fontSize: '20px', fontWeight: '600', color: '#58a6ff' }}>
+                                                nostr-protocol/nips
+                                            </span>
+                                            <Badge style={{ background: '#1f6feb', border: 'none', color: '#fff' }}>Public</Badge>
+                                            <Badge variant="outline" style={{ background: 'transparent', border: '1px solid #3fb950', color: '#3fb950', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                                <span style={{ fontSize: '10px' }}>✓</span> Verified
+                                            </Badge>
+                                            <Badge variant="outline" style={{ background: 'transparent', border: '1px solid #bb93f0', color: '#bb93f0', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                                <span style={{ fontSize: '10px' }}>♦</span> Permanent
+                                            </Badge>
+                                        </div>
+                                        <p style={{ color: '#8b949e', fontSize: '14px', marginBottom: '16px' }}>
+                                            Nostr Implementation Possibilities
+                                        </p>
+                                        <div style={{ display: 'flex', gap: '20px', fontSize: '13px', color: '#8b949e' }}>
+                                            <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                                <span style={{ color: '#3fb950' }}>●</span> Markdown
+                                            </span>
+                                            <span>⭐ 2,145</span>
+                                            <span>🔱 456</span>
+                                            <span>Public Domain</span>
+                                            <span>Updated 2 hours ago</span>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <Button variant="outline" style={{ background: 'transparent', border: '1px solid #30363d', color: '#c9d1d9' }}>
+                                            ★ Star
+                                        </Button>
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </div>
+                </div>
+            );
+        };
+
+        // Direction 3: Minimal Trust Proof
+        const MinimalTrustProof = () => (
+            <div className="direction-container minimal-trust">
+                <div className="direction-header">
+                    <div className="direction-title">3. Minimal Trust Proof</div>
+                    <div className="direction-description">Spacious design emphasizing permanence guarantees and trust signals</div>
+                </div>
+                <div className="direction-canvas">
+                    <div style={{ textAlign: 'center', marginBottom: '48px', padding: '32px', background: '#fff', borderRadius: '8px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+                        <h2 style={{ fontSize: '32px', fontWeight: '700', marginBottom: '16px', color: '#000' }}>
+                            Permanent. Verifiable. Unstoppable.
+                        </h2>
+                        <p style={{ fontSize: '16px', color: '#666', maxWidth: '600px', margin: '0 auto' }}>
+                            Every repository is cryptographically signed and permanently stored on Arweave.
+                            No single point of failure. No censorship.
+                        </p>
+                    </div>
+
+                    <Card style={{ background: '#fff', border: '1px solid #e0e0e0', marginBottom: '24px', boxShadow: '0 2px 8px rgba(0,0,0,0.05)' }}>
+                        <CardHeader style={{ borderBottom: '1px solid #f0f0f0' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <CardTitle style={{ fontSize: '24px', color: '#000' }}>bitcoin/bitcoin</CardTitle>
+                                <div style={{ display: 'flex', gap: '12px' }}>
+                                    <div style={{ textAlign: 'center', padding: '8px 16px', background: '#f8f9fa', borderRadius: '6px' }}>
+                                        <div style={{ fontSize: '11px', color: '#666', marginBottom: '2px' }}>VERIFIED</div>
+                                        <div style={{ fontSize: '18px', fontWeight: '700', color: '#10b981' }}>✓</div>
+                                    </div>
+                                    <div style={{ textAlign: 'center', padding: '8px 16px', background: '#f8f9fa', borderRadius: '6px' }}>
+                                        <div style={{ fontSize: '11px', color: '#666', marginBottom: '2px' }}>PERMANENT</div>
+                                        <div style={{ fontSize: '18px', fontWeight: '700', color: '#8b5cf6' }}>♦</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </CardHeader>
+                        <CardContent style={{ padding: '32px' }}>
+                            <p style={{ fontSize: '16px', color: '#333', marginBottom: '24px', lineHeight: '1.6' }}>
+                                Bitcoin Core integration/staging tree
+                            </p>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '24px', marginBottom: '24px' }}>
+                                <div>
+                                    <div style={{ fontSize: '12px', color: '#666', marginBottom: '4px' }}>Stars</div>
+                                    <div style={{ fontSize: '24px', fontWeight: '700', color: '#000' }}>79.2k</div>
+                                </div>
+                                <div>
+                                    <div style={{ fontSize: '12px', color: '#666', marginBottom: '4px' }}>Forks</div>
+                                    <div style={{ fontSize: '24px', fontWeight: '700', color: '#000' }}>38.4k</div>
+                                </div>
+                                <div>
+                                    <div style={{ fontSize: '12px', color: '#666', marginBottom: '4px' }}>Language</div>
+                                    <div style={{ fontSize: '24px', fontWeight: '700', color: '#000' }}>C++</div>
+                                </div>
+                                <div>
+                                    <div style={{ fontSize: '12px', color: '#666', marginBottom: '4px' }}>License</div>
+                                    <div style={{ fontSize: '24px', fontWeight: '700', color: '#000' }}>MIT</div>
+                                </div>
+                            </div>
+                            <div style={{ padding: '16px', background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '6px' }}>
+                                <div style={{ fontSize: '13px', color: '#166534', fontWeight: '600', marginBottom: '4px' }}>
+                                    ✓ Signature Verified
+                                </div>
+                                <div style={{ fontSize: '12px', color: '#15803d' }}>
+                                    Signed by npub1a2cww4kn9wqte4ry70vyfwqyqvpswksn76pftd8klm7hnxf3vfq3ktyra
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    <div style={{ textAlign: 'center', padding: '24px' }}>
+                        <Button style={{ background: '#000', color: '#fff', fontSize: '16px', padding: '12px 32px' }}>
+                            Browse All Repositories
+                        </Button>
+                    </div>
+                </div>
+            </div>
+        );
+
+        // Direction 4: P2P Network Dashboard
+        const P2PNetworkDashboard = () => (
+            <div className="direction-container p2p-network">
+                <div className="direction-header">
+                    <div className="direction-title">4. P2P Network Dashboard</div>
+                    <div className="direction-description">Visual network health and relay connection status with stats-driven interface</div>
+                </div>
+                <div className="direction-canvas">
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '16px', marginBottom: '32px' }}>
+                        {[
+                            { label: 'Connected Relays', value: '4/5', color: '#3b82f6' },
+                            { label: 'Avg Latency', value: '23ms', color: '#10b981' },
+                            { label: 'Repositories', value: '2,145', color: '#8b5cf6' },
+                            { label: 'Stored on Arweave', value: '100%', color: '#f59e0b' },
+                            { label: 'Network Health', value: '98%', color: '#10b981' }
+                        ].map((stat, i) => (
+                            <div key={i} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', padding: '16px', backdropFilter: 'blur(10px)' }}>
+                                <div style={{ fontSize: '11px', color: '#888', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                                    {stat.label}
+                                </div>
+                                <div style={{ fontSize: '24px', fontWeight: '700', color: stat.color }}>
+                                    {stat.value}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: '300px 1fr', gap: '24px' }}>
+                        <div>
+                            <h3 style={{ fontSize: '14px', fontWeight: '600', marginBottom: '16px', color: '#888', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                                Relay Status
+                            </h3>
+                            {[
+                                { name: 'relay.nostr.band', status: 'connected', latency: '18ms' },
+                                { name: 'nos.lol', status: 'connected', latency: '24ms' },
+                                { name: 'relay.damus.io', status: 'connected', latency: '31ms' },
+                                { name: 'relay.snort.social', status: 'disconnected', latency: '-' },
+                                { name: 'nostr.wine', status: 'connected', latency: '19ms' }
+                            ].map((relay, i) => (
+                                <div key={i} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', padding: '12px', marginBottom: '8px' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                                        <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: relay.status === 'connected' ? '#10b981' : '#ef4444' }}></span>
+                                        <span style={{ fontSize: '13px', fontWeight: '500' }}>{relay.name}</span>
+                                    </div>
+                                    <div style={{ fontSize: '11px', color: '#666', paddingLeft: '16px' }}>
+                                        {relay.latency}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        <div>
+                            <h3 style={{ fontSize: '14px', fontWeight: '600', marginBottom: '16px', color: '#888', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                                Recent Activity
+                            </h3>
+                            <Card style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', marginBottom: '12px', backdropFilter: 'blur(10px)' }}>
+                                <CardContent style={{ padding: '20px' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '12px' }}>
+                                        <div style={{ fontSize: '18px', fontWeight: '600', color: '#3b82f6' }}>
+                                            bitcoin/bitcoin
+                                        </div>
+                                        <Badge style={{ background: 'rgba(16, 185, 129, 0.2)', border: '1px solid #10b981', color: '#10b981' }}>
+                                            ✓ Verified
+                                        </Badge>
+                                    </div>
+                                    <div style={{ fontSize: '14px', color: '#aaa', marginBottom: '16px' }}>
+                                        Bitcoin Core integration/staging tree
+                                    </div>
+                                    <div style={{ display: 'flex', gap: '16px', fontSize: '13px', color: '#888' }}>
+                                        <span>⭐ 79.2k</span>
+                                        <span>🔱 38.4k</span>
+                                        <span>Updated 15m ago</span>
+                                    </div>
+                                    <div style={{ marginTop: '12px', fontSize: '11px', color: '#666', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                        <span style={{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', background: '#8b5cf6' }}></span>
+                                        Stored: ar://3xK9j2... (4.2 MB)
+                                    </div>
+                                </CardContent>
+                            </Card>
+
+                            <Card style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', backdropFilter: 'blur(10px)' }}>
+                                <CardContent style={{ padding: '20px' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '12px' }}>
+                                        <div style={{ fontSize: '18px', fontWeight: '600', color: '#3b82f6' }}>
+                                            nostr-protocol/nips
+                                        </div>
+                                        <Badge style={{ background: 'rgba(16, 185, 129, 0.2)', border: '1px solid #10b981', color: '#10b981' }}>
+                                            ✓ Verified
+                                        </Badge>
+                                    </div>
+                                    <div style={{ fontSize: '14px', color: '#aaa', marginBottom: '16px' }}>
+                                        Nostr Implementation Possibilities
+                                    </div>
+                                    <div style={{ display: 'flex', gap: '16px', fontSize: '13px', color: '#888' }}>
+                                        <span>⭐ 2.1k</span>
+                                        <span>🔱 456</span>
+                                        <span>Updated 2h ago</span>
+                                    </div>
+                                    <div style={{ marginTop: '12px', fontSize: '11px', color: '#666', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                        <span style={{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', background: '#8b5cf6' }}></span>
+                                        Stored: ar://8mF2n7... (1.8 MB)
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+
+        // Direction 5: Progressive Disclosure
+        const ProgressiveDisclosure = () => {
+            const [expandedRepo, setExpandedRepo] = useState(null);
+
+            return (
+                <div className="direction-container progressive-disclosure">
+                    <div className="direction-header">
+                        <div className="direction-title">5. Progressive Disclosure</div>
+                        <div className="direction-description">Simple surface with expandable technical details for varying skill levels</div>
+                    </div>
+                    <div className="direction-canvas">
+                        <div style={{ marginBottom: '32px' }}>
+                            <h1 style={{ fontSize: '36px', fontWeight: '700', marginBottom: '12px', color: '#000' }}>
+                                Discover Repositories
+                            </h1>
+                            <p style={{ fontSize: '16px', color: '#666' }}>
+                                Browse decentralized, censorship-resistant code repositories
+                            </p>
+                        </div>
+
+                        <Card style={{ background: '#fff', border: '2px solid #e5e7eb', marginBottom: '16px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', transition: 'all 0.2s' }}>
+                            <CardContent style={{ padding: '24px' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '12px' }}>
+                                    <div style={{ flex: 1 }}>
+                                        <h3 style={{ fontSize: '22px', fontWeight: '600', color: '#000', marginBottom: '8px' }}>
+                                            bitcoin/bitcoin
+                                        </h3>
+                                        <p style={{ fontSize: '15px', color: '#666', marginBottom: '16px' }}>
+                                            Bitcoin Core integration/staging tree
+                                        </p>
+                                        <div style={{ display: 'flex', gap: '16px', fontSize: '14px', color: '#888' }}>
+                                            <span>⭐ 79,234 stars</span>
+                                            <span>🔱 38,401 forks</span>
+                                            <span>C++</span>
+                                            <span>MIT license</span>
+                                        </div>
+                                    </div>
+                                    <Button
+                                        variant="outline"
+                                        onClick={() => setExpandedRepo(expandedRepo === 'bitcoin' ? null : 'bitcoin')}
+                                        style={{ background: '#f9fafb', border: '1px solid #d1d5db', color: '#374151' }}
+                                    >
+                                        {expandedRepo === 'bitcoin' ? 'Hide Details' : 'Show Details'}
+                                    </Button>
+                                </div>
+
+                                {expandedRepo === 'bitcoin' && (
+                                    <div style={{ marginTop: '20px', padding: '20px', background: '#f9fafb', borderRadius: '8px', border: '1px solid #e5e7eb' }}>
+                                        <h4 style={{ fontSize: '14px', fontWeight: '600', color: '#000', marginBottom: '12px' }}>
+                                            Technical Details
+                                        </h4>
+                                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px', fontSize: '13px' }}>
+                                            <div>
+                                                <div style={{ color: '#6b7280', marginBottom: '4px' }}>Nostr Public Key</div>
+                                                <div style={{ fontFamily: 'monospace', color: '#000', fontSize: '11px', wordBreak: 'break-all' }}>
+                                                    npub1a2cww4kn9wqte4ry70vyfwqyqvpswksn76pftd8klm7hnxf3vfq3ktyra
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <div style={{ color: '#6b7280', marginBottom: '4px' }}>Arweave Transaction</div>
+                                                <div style={{ fontFamily: 'monospace', color: '#000', fontSize: '11px', wordBreak: 'break-all' }}>
+                                                    ar://3xK9j2mF8pLqN7vRtY5sH4wC1dE6gB9xQ2aZ8fT3kM5n
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <div style={{ color: '#6b7280', marginBottom: '4px' }}>Signature Status</div>
+                                                <div style={{ color: '#10b981', fontWeight: '600' }}>✓ Verified</div>
+                                            </div>
+                                            <div>
+                                                <div style={{ color: '#6b7280', marginBottom: '4px' }}>Storage Status</div>
+                                                <div style={{ color: '#8b5cf6', fontWeight: '600' }}>♦ Permanent</div>
+                                            </div>
+                                            <div>
+                                                <div style={{ color: '#6b7280', marginBottom: '4px' }}>Last Updated</div>
+                                                <div style={{ color: '#000' }}>15 minutes ago</div>
+                                            </div>
+                                            <div>
+                                                <div style={{ color: '#6b7280', marginBottom: '4px' }}>Connected Relays</div>
+                                                <div style={{ color: '#000' }}>4 of 5 online</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+                            </CardContent>
+                        </Card>
+
+                        <Card style={{ background: '#fff', border: '2px solid #e5e7eb', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', transition: 'all 0.2s' }}>
+                            <CardContent style={{ padding: '24px' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '12px' }}>
+                                    <div style={{ flex: 1 }}>
+                                        <h3 style={{ fontSize: '22px', fontWeight: '600', color: '#000', marginBottom: '8px' }}>
+                                            nostr-protocol/nips
+                                        </h3>
+                                        <p style={{ fontSize: '15px', color: '#666', marginBottom: '16px' }}>
+                                            Nostr Implementation Possibilities
+                                        </p>
+                                        <div style={{ display: 'flex', gap: '16px', fontSize: '14px', color: '#888' }}>
+                                            <span>⭐ 2,145 stars</span>
+                                            <span>🔱 456 forks</span>
+                                            <span>Markdown</span>
+                                            <span>Public Domain</span>
+                                        </div>
+                                    </div>
+                                    <Button
+                                        variant="outline"
+                                        onClick={() => setExpandedRepo(expandedRepo === 'nips' ? null : 'nips')}
+                                        style={{ background: '#f9fafb', border: '1px solid #d1d5db', color: '#374151' }}
+                                    >
+                                        {expandedRepo === 'nips' ? 'Hide Details' : 'Show Details'}
+                                    </Button>
+                                </div>
+
+                                {expandedRepo === 'nips' && (
+                                    <div style={{ marginTop: '20px', padding: '20px', background: '#f9fafb', borderRadius: '8px', border: '1px solid #e5e7eb' }}>
+                                        <h4 style={{ fontSize: '14px', fontWeight: '600', color: '#000', marginBottom: '12px' }}>
+                                            Technical Details
+                                        </h4>
+                                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px', fontSize: '13px' }}>
+                                            <div>
+                                                <div style={{ color: '#6b7280', marginBottom: '4px' }}>Nostr Public Key</div>
+                                                <div style={{ fontFamily: 'monospace', color: '#000', fontSize: '11px', wordBreak: 'break-all' }}>
+                                                    npub19mun7qwdyjf7qs3456tnxypwtqmwkh5buw4xp7hzz5wc7p3hestqnq0j7a
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <div style={{ color: '#6b7280', marginBottom: '4px' }}>Arweave Transaction</div>
+                                                <div style={{ fontFamily: 'monospace', color: '#000', fontSize: '11px', wordBreak: 'break-all' }}>
+                                                    ar://8mF2n7pX9qK4jL3vT6yH5sR2wN8dG1fB7aM4cZ9tP6xQ
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <div style={{ color: '#6b7280', marginBottom: '4px' }}>Signature Status</div>
+                                                <div style={{ color: '#10b981', fontWeight: '600' }}>✓ Verified</div>
+                                            </div>
+                                            <div>
+                                                <div style={{ color: '#6b7280', marginBottom: '4px' }}>Storage Status</div>
+                                                <div style={{ color: '#8b5cf6', fontWeight: '600' }}>♦ Permanent</div>
+                                            </div>
+                                            <div>
+                                                <div style={{ color: '#6b7280', marginBottom: '4px' }}>Last Updated</div>
+                                                <div style={{ color: '#000' }}>2 hours ago</div>
+                                            </div>
+                                            <div>
+                                                <div style={{ color: '#6b7280', marginBottom: '4px' }}>Connected Relays</div>
+                                                <div style={{ color: '#000' }}>4 of 5 online</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+                            </CardContent>
+                        </Card>
+                    </div>
+                </div>
+            );
+        };
+
+        // Direction 6: Ecosystem Native
+        const EcosystemNative = () => (
+            <div className="direction-container ecosystem-native">
+                <div className="direction-header">
+                    <div className="direction-title">6. Ecosystem Native</div>
+                    <div className="direction-description">Web3 aesthetics with gradients, glassmorphism, and Nostr-native branding</div>
+                </div>
+                <div className="direction-canvas" style={{ position: 'relative' }}>
+                    <div style={{ marginBottom: '32px', textAlign: 'center' }}>
+                        <h1 style={{ fontSize: '42px', fontWeight: '900', marginBottom: '12px', color: '#fff', textShadow: '0 2px 20px rgba(0,0,0,0.3)' }}>
+                            Nostr-Native Git Hosting
+                        </h1>
+                        <p style={{ fontSize: '18px', color: 'rgba(255,255,255,0.9)', textShadow: '0 1px 10px rgba(0,0,0,0.2)' }}>
+                            Decentralized. Censorship-resistant. Permanent.
+                        </p>
+                    </div>
+
+                    <Card style={{ background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.25)', backdropFilter: 'blur(20px)', color: '#fff', marginBottom: '20px', boxShadow: '0 8px 32px rgba(0,0,0,0.2)' }}>
+                        <CardContent style={{ padding: '28px' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '16px' }}>
+                                <div style={{ flex: 1 }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
+                                        <h3 style={{ fontSize: '24px', fontWeight: '700', color: '#fff' }}>
+                                            bitcoin/bitcoin
+                                        </h3>
+                                        <Badge style={{ background: 'rgba(16, 185, 129, 0.3)', border: '1px solid rgba(16, 185, 129, 0.5)', color: '#fff', backdropFilter: 'blur(10px)', fontWeight: '600' }}>
+                                            ⚡ Nostr Native
+                                        </Badge>
+                                    </div>
+                                    <p style={{ fontSize: '15px', color: 'rgba(255,255,255,0.85)', marginBottom: '16px' }}>
+                                        Bitcoin Core integration/staging tree
+                                    </p>
+                                    <div style={{ display: 'flex', gap: '20px', fontSize: '14px', color: 'rgba(255,255,255,0.75)' }}>
+                                        <span>⭐ 79.2k</span>
+                                        <span>🔱 38.4k</span>
+                                        <span>C++</span>
+                                        <span>MIT</span>
+                                    </div>
+                                </div>
+                                <div style={{ display: 'flex', gap: '12px' }}>
+                                    <div style={{ background: 'rgba(16, 185, 129, 0.2)', padding: '12px', borderRadius: '8px', backdropFilter: 'blur(10px)', border: '1px solid rgba(16, 185, 129, 0.3)' }}>
+                                        <div style={{ fontSize: '24px', marginBottom: '4px' }}>✓</div>
+                                        <div style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Verified</div>
+                                    </div>
+                                    <div style={{ background: 'rgba(139, 92, 246, 0.2)', padding: '12px', borderRadius: '8px', backdropFilter: 'blur(10px)', border: '1px solid rgba(139, 92, 246, 0.3)' }}>
+                                        <div style={{ fontSize: '24px', marginBottom: '4px' }}>♦</div>
+                                        <div style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Permanent</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div style={{ padding: '12px 16px', background: 'rgba(0,0,0,0.2)', borderRadius: '6px', fontSize: '12px', fontFamily: 'monospace', color: 'rgba(255,255,255,0.7)' }}>
+                                ar://3xK9j2mF8pLqN7vRtY5sH4wC1dE6gB9xQ2aZ8fT3kM5n
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    <Card style={{ background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.25)', backdropFilter: 'blur(20px)', color: '#fff', boxShadow: '0 8px 32px rgba(0,0,0,0.2)' }}>
+                        <CardContent style={{ padding: '28px' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '16px' }}>
+                                <div style={{ flex: 1 }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
+                                        <h3 style={{ fontSize: '24px', fontWeight: '700', color: '#fff' }}>
+                                            nostr-protocol/nips
+                                        </h3>
+                                        <Badge style={{ background: 'rgba(16, 185, 129, 0.3)', border: '1px solid rgba(16, 185, 129, 0.5)', color: '#fff', backdropFilter: 'blur(10px)', fontWeight: '600' }}>
+                                            ⚡ Nostr Native
+                                        </Badge>
+                                    </div>
+                                    <p style={{ fontSize: '15px', color: 'rgba(255,255,255,0.85)', marginBottom: '16px' }}>
+                                        Nostr Implementation Possibilities
+                                    </p>
+                                    <div style={{ display: 'flex', gap: '20px', fontSize: '14px', color: 'rgba(255,255,255,0.75)' }}>
+                                        <span>⭐ 2.1k</span>
+                                        <span>🔱 456</span>
+                                        <span>Markdown</span>
+                                        <span>Public Domain</span>
+                                    </div>
+                                </div>
+                                <div style={{ display: 'flex', gap: '12px' }}>
+                                    <div style={{ background: 'rgba(16, 185, 129, 0.2)', padding: '12px', borderRadius: '8px', backdropFilter: 'blur(10px)', border: '1px solid rgba(16, 185, 129, 0.3)' }}>
+                                        <div style={{ fontSize: '24px', marginBottom: '4px' }}>✓</div>
+                                        <div style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Verified</div>
+                                    </div>
+                                    <div style={{ background: 'rgba(139, 92, 246, 0.2)', padding: '12px', borderRadius: '8px', backdropFilter: 'blur(10px)', border: '1px solid rgba(139, 92, 246, 0.3)' }}>
+                                        <div style={{ fontSize: '24px', marginBottom: '4px' }}>♦</div>
+                                        <div style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Permanent</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div style={{ padding: '12px 16px', background: 'rgba(0,0,0,0.2)', borderRadius: '6px', fontSize: '12px', fontFamily: 'monospace', color: 'rgba(255,255,255,0.7)' }}>
+                                ar://8mF2n7pX9qK4jL3vT6yH5sR2wN8dG1fB7aM4cZ9tP6xQ
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    <div style={{ marginTop: '32px', textAlign: 'center' }}>
+                        <Button style={{ background: 'rgba(255,255,255,0.2)', backdropFilter: 'blur(10px)', border: '1px solid rgba(255,255,255,0.3)', color: '#fff', fontSize: '16px', padding: '14px 32px', fontWeight: '600' }}>
+                            Explore All Repositories
+                        </Button>
+                    </div>
+                </div>
+            </div>
+        );
+
+        // Direction 7: Data-First Table
+        const DataFirstTable = () => (
+            <div className="direction-container data-first-table">
+                <div className="direction-header">
+                    <div className="direction-title">7. Data-First Table</div>
+                    <div className="direction-description">Dense tabular layout optimized for information density and power users</div>
+                </div>
+                <div className="direction-canvas">
+                    <div style={{ marginBottom: '20px', padding: '16px', background: '#fff', borderBottom: '2px solid #000' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <h2 style={{ fontSize: '20px', fontWeight: '700', fontFamily: 'Berkeley Mono, monospace' }}>
+                                REPOSITORIES
+                            </h2>
+                            <div style={{ display: 'flex', gap: '16px', fontSize: '13px' }}>
+                                <span><strong>Total:</strong> 2,145</span>
+                                <span><strong>Verified:</strong> 2,145</span>
+                                <span><strong>Storage:</strong> 847 GB</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', fontFamily: 'Berkeley Mono, monospace' }}>
+                        <thead>
+                            <tr style={{ background: '#000', color: '#fff', textAlign: 'left' }}>
+                                <th style={{ padding: '12px 16px', fontWeight: '700' }}>NAME</th>
+                                <th style={{ padding: '12px 16px', fontWeight: '700' }}>DESCRIPTION</th>
+                                <th style={{ padding: '12px 16px', fontWeight: '700', textAlign: 'center' }}>STARS</th>
+                                <th style={{ padding: '12px 16px', fontWeight: '700', textAlign: 'center' }}>FORKS</th>
+                                <th style={{ padding: '12px 16px', fontWeight: '700' }}>LANG</th>
+                                <th style={{ padding: '12px 16px', fontWeight: '700' }}>LICENSE</th>
+                                <th style={{ padding: '12px 16px', fontWeight: '700', textAlign: 'center' }}>STATUS</th>
+                                <th style={{ padding: '12px 16px', fontWeight: '700' }}>UPDATED</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr style={{ borderBottom: '1px solid #e0e0e0', background: '#fff' }}>
+                                <td style={{ padding: '14px 16px', fontWeight: '700' }}>bitcoin/bitcoin</td>
+                                <td style={{ padding: '14px 16px', maxWidth: '300px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                    Bitcoin Core integration/staging tree
+                                </td>
+                                <td style={{ padding: '14px 16px', textAlign: 'center' }}>79,234</td>
+                                <td style={{ padding: '14px 16px', textAlign: 'center' }}>38,401</td>
+                                <td style={{ padding: '14px 16px' }}>C++</td>
+                                <td style={{ padding: '14px 16px' }}>MIT</td>
+                                <td style={{ padding: '14px 16px', textAlign: 'center' }}>
+                                    <span style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', background: '#10b981', marginRight: '6px' }}></span>
+                                    <span style={{ fontSize: '11px' }}>LIVE</span>
+                                </td>
+                                <td style={{ padding: '14px 16px' }}>15m</td>
+                            </tr>
+                            <tr style={{ borderBottom: '1px solid #e0e0e0', background: '#fafafa' }}>
+                                <td style={{ padding: '14px 16px', fontWeight: '700' }}>nostr-protocol/nips</td>
+                                <td style={{ padding: '14px 16px', maxWidth: '300px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                    Nostr Implementation Possibilities
+                                </td>
+                                <td style={{ padding: '14px 16px', textAlign: 'center' }}>2,145</td>
+                                <td style={{ padding: '14px 16px', textAlign: 'center' }}>456</td>
+                                <td style={{ padding: '14px 16px' }}>MD</td>
+                                <td style={{ padding: '14px 16px' }}>PD</td>
+                                <td style={{ padding: '14px 16px', textAlign: 'center' }}>
+                                    <span style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', background: '#10b981', marginRight: '6px' }}></span>
+                                    <span style={{ fontSize: '11px' }}>LIVE</span>
+                                </td>
+                                <td style={{ padding: '14px 16px' }}>2h</td>
+                            </tr>
+                            <tr style={{ borderBottom: '1px solid #e0e0e0', background: '#fff' }}>
+                                <td style={{ padding: '14px 16px', fontWeight: '700' }}>rust-lang/rust</td>
+                                <td style={{ padding: '14px 16px', maxWidth: '300px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                    Empowering everyone to build reliable software
+                                </td>
+                                <td style={{ padding: '14px 16px', textAlign: 'center' }}>97,456</td>
+                                <td style={{ padding: '14px 16px', textAlign: 'center' }}>12,789</td>
+                                <td style={{ padding: '14px 16px' }}>Rust</td>
+                                <td style={{ padding: '14px 16px' }}>MIT</td>
+                                <td style={{ padding: '14px 16px', textAlign: 'center' }}>
+                                    <span style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', background: '#10b981', marginRight: '6px' }}></span>
+                                    <span style={{ fontSize: '11px' }}>LIVE</span>
+                                </td>
+                                <td style={{ padding: '14px 16px' }}>1h</td>
+                            </tr>
+                            <tr style={{ borderBottom: '1px solid #e0e0e0', background: '#fafafa' }}>
+                                <td style={{ padding: '14px 16px', fontWeight: '700' }}>golang/go</td>
+                                <td style={{ padding: '14px 16px', maxWidth: '300px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                    The Go programming language
+                                </td>
+                                <td style={{ padding: '14px 16px', textAlign: 'center' }}>123,567</td>
+                                <td style={{ padding: '14px 16px', textAlign: 'center' }}>18,234</td>
+                                <td style={{ padding: '14px 16px' }}>Go</td>
+                                <td style={{ padding: '14px 16px' }}>BSD-3</td>
+                                <td style={{ padding: '14px 16px', textAlign: 'center' }}>
+                                    <span style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', background: '#10b981', marginRight: '6px' }}></span>
+                                    <span style={{ fontSize: '11px' }}>LIVE</span>
+                                </td>
+                                <td style={{ padding: '14px 16px' }}>45m</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <div style={{ marginTop: '20px', padding: '16px', background: '#fff', borderTop: '2px solid #000', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px' }}>
+                        <div>
+                            Showing 1-4 of 2,145 repositories
+                        </div>
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                            <button style={{ padding: '6px 12px', background: '#000', color: '#fff', border: 'none', borderRadius: '3px', cursor: 'pointer', fontFamily: 'Berkeley Mono, monospace', fontWeight: '600' }}>
+                                PREV
+                            </button>
+                            <button style={{ padding: '6px 12px', background: '#000', color: '#fff', border: 'none', borderRadius: '3px', cursor: 'pointer', fontFamily: 'Berkeley Mono, monospace', fontWeight: '600' }}>
+                                NEXT
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+
+        // Direction 8: Mobile-First Cards
+        const MobileFirstCards = () => (
+            <div className="direction-container mobile-first-cards">
+                <div className="direction-header">
+                    <div className="direction-title">8. Mobile-First Cards</div>
+                    <div className="direction-description">Large touch targets with avatar-driven card-based stacked layout</div>
+                </div>
+                <div className="direction-canvas">
+                    <div style={{ marginBottom: '24px' }}>
+                        <input
+                            type="text"
+                            placeholder="Search repositories..."
+                            style={{
+                                width: '100%',
+                                padding: '16px 20px',
+                                fontSize: '16px',
+                                border: '2px solid #dee2e6',
+                                borderRadius: '12px',
+                                background: '#fff',
+                                outline: 'none'
+                            }}
+                        />
+                    </div>
+
+                    <Card style={{ background: '#fff', border: '2px solid #e9ecef', borderRadius: '16px', marginBottom: '16px', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
+                        <CardContent style={{ padding: '24px' }}>
+                            <div style={{ display: 'flex', gap: '16px', marginBottom: '16px' }}>
+                                <div style={{ width: '56px', height: '56px', borderRadius: '12px', background: 'linear-gradient(135deg, #f97316, #ea580c)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px', fontWeight: '700', color: '#fff', flexShrink: 0 }}>
+                                    B
+                                </div>
+                                <div style={{ flex: 1, minWidth: 0 }}>
+                                    <h3 style={{ fontSize: '20px', fontWeight: '700', marginBottom: '4px', color: '#000' }}>
+                                        bitcoin/bitcoin
+                                    </h3>
+                                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                                        <Badge style={{ background: '#dcfce7', color: '#166534', border: 'none', fontSize: '11px' }}>
+                                            ✓ Verified
+                                        </Badge>
+                                        <Badge style={{ background: '#f3e8ff', color: '#6b21a8', border: 'none', fontSize: '11px' }}>
+                                            ♦ Permanent
+                                        </Badge>
+                                    </div>
+                                </div>
+                            </div>
+                            <p style={{ fontSize: '15px', color: '#495057', marginBottom: '16px', lineHeight: '1.5' }}>
+                                Bitcoin Core integration/staging tree
+                            </p>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', marginBottom: '16px' }}>
+                                <div style={{ textAlign: 'center', padding: '12px', background: '#f8f9fa', borderRadius: '8px' }}>
+                                    <div style={{ fontSize: '18px', fontWeight: '700', color: '#000', marginBottom: '2px' }}>79.2k</div>
+                                    <div style={{ fontSize: '11px', color: '#6c757d' }}>Stars</div>
+                                </div>
+                                <div style={{ textAlign: 'center', padding: '12px', background: '#f8f9fa', borderRadius: '8px' }}>
+                                    <div style={{ fontSize: '18px', fontWeight: '700', color: '#000', marginBottom: '2px' }}>38.4k</div>
+                                    <div style={{ fontSize: '11px', color: '#6c757d' }}>Forks</div>
+                                </div>
+                                <div style={{ textAlign: 'center', padding: '12px', background: '#f8f9fa', borderRadius: '8px' }}>
+                                    <div style={{ fontSize: '18px', fontWeight: '700', color: '#000', marginBottom: '2px' }}>C++</div>
+                                    <div style={{ fontSize: '11px', color: '#6c757d' }}>Language</div>
+                                </div>
+                            </div>
+                            <button style={{ width: '100%', padding: '16px', background: '#0d6efd', color: '#fff', border: 'none', borderRadius: '12px', fontSize: '16px', fontWeight: '600', cursor: 'pointer' }}>
+                                View Repository
+                            </button>
+                        </CardContent>
+                    </Card>
+
+                    <Card style={{ background: '#fff', border: '2px solid #e9ecef', borderRadius: '16px', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
+                        <CardContent style={{ padding: '24px' }}>
+                            <div style={{ display: 'flex', gap: '16px', marginBottom: '16px' }}>
+                                <div style={{ width: '56px', height: '56px', borderRadius: '12px', background: 'linear-gradient(135deg, #8b5cf6, #7c3aed)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px', fontWeight: '700', color: '#fff', flexShrink: 0 }}>
+                                    N
+                                </div>
+                                <div style={{ flex: 1, minWidth: 0 }}>
+                                    <h3 style={{ fontSize: '20px', fontWeight: '700', marginBottom: '4px', color: '#000' }}>
+                                        nostr-protocol/nips
+                                    </h3>
+                                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                                        <Badge style={{ background: '#dcfce7', color: '#166534', border: 'none', fontSize: '11px' }}>
+                                            ✓ Verified
+                                        </Badge>
+                                        <Badge style={{ background: '#f3e8ff', color: '#6b21a8', border: 'none', fontSize: '11px' }}>
+                                            ♦ Permanent
+                                        </Badge>
+                                    </div>
+                                </div>
+                            </div>
+                            <p style={{ fontSize: '15px', color: '#495057', marginBottom: '16px', lineHeight: '1.5' }}>
+                                Nostr Implementation Possibilities
+                            </p>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', marginBottom: '16px' }}>
+                                <div style={{ textAlign: 'center', padding: '12px', background: '#f8f9fa', borderRadius: '8px' }}>
+                                    <div style={{ fontSize: '18px', fontWeight: '700', color: '#000', marginBottom: '2px' }}>2.1k</div>
+                                    <div style={{ fontSize: '11px', color: '#6c757d' }}>Stars</div>
+                                </div>
+                                <div style={{ textAlign: 'center', padding: '12px', background: '#f8f9fa', borderRadius: '8px' }}>
+                                    <div style={{ fontSize: '18px', fontWeight: '700', color: '#000', marginBottom: '2px' }}>456</div>
+                                    <div style={{ fontSize: '11px', color: '#6c757d' }}>Forks</div>
+                                </div>
+                                <div style={{ textAlign: 'center', padding: '12px', background: '#f8f9fa', borderRadius: '8px' }}>
+                                    <div style={{ fontSize: '18px', fontWeight: '700', color: '#000', marginBottom: '2px' }}>MD</div>
+                                    <div style={{ fontSize: '11px', color: '#6c757d' }}>Language</div>
+                                </div>
+                            </div>
+                            <button style={{ width: '100%', padding: '16px', background: '#0d6efd', color: '#fff', border: 'none', borderRadius: '12px', fontSize: '16px', fontWeight: '600', cursor: 'pointer' }}>
+                                View Repository
+                            </button>
+                        </CardContent>
+                    </Card>
+                </div>
+            </div>
+        );
+
+        // Render all directions
+        ReactDOM.render(<TechnicalTransparency />, document.getElementById('direction-1'));
+        ReactDOM.render(<GitHubEvolved />, document.getElementById('direction-2'));
+        ReactDOM.render(<MinimalTrustProof />, document.getElementById('direction-3'));
+        ReactDOM.render(<P2PNetworkDashboard />, document.getElementById('direction-4'));
+        ReactDOM.render(<ProgressiveDisclosure />, document.getElementById('direction-5'));
+        ReactDOM.render(<EcosystemNative />, document.getElementById('direction-6'));
+        ReactDOM.render(<DataFirstTable />, document.getElementById('direction-7'));
+        ReactDOM.render(<MobileFirstCards />, document.getElementById('direction-8'));
+    </script>
+</body>
+</html>
