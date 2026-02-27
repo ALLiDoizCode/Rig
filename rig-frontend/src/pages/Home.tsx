@@ -190,7 +190,7 @@ export function Component() {
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="absolute right-1 top-1/2 -translate-y-1/2 size-8 text-muted-foreground hover:text-foreground transition-colors"
+                  className="absolute right-0.5 top-1/2 -translate-y-1/2 size-11 text-muted-foreground hover:text-foreground transition-colors"
                   onClick={handleClear}
                   aria-label="Clear search"
                 >

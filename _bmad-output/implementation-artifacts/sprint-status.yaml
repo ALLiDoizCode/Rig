@@ -53,14 +53,14 @@ development_status:
   1-10-development-environment-configuration: done
   epic-1-retrospective: done
 
-  epic-2: in-progress
+  epic-2: done
   2-1-repository-list-page-with-nostr-query: done
   2-2-repository-card-component-with-metadata: done
   2-3-client-side-search-and-filtering: done
   2-4-repository-detail-page: done
   2-5-relay-status-indicators: done
   2-6-real-time-repository-updates: done
-  epic-2-retrospective: optional
+  epic-2-retrospective: done
 
   epic-3: backlog
   3-1-file-tree-navigation-component: backlog

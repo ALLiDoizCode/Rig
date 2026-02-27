@@ -1,183 +1,264 @@
-# Claude Instructions for Rid Project
+# Claude Instructions for Rig Project
 
-## Default UI Library: shadcn-ui
+> **Context Reference:** For comprehensive project details (architecture, tech stack, implementation status, patterns, and conventions), see `/Users/jonathangreen/Documents/Rig/_bmad-output/project-context.md`. This file is auto-generated and contains all technical context. CLAUDE.md focuses exclusively on behavioral instructions and tool usage that are NOT covered in project-context.md.
 
-**shadcn-ui v4 is the default UI component library for this project.**
+---
 
-When building any user interface components, dashboards, forms, or interactive elements:
+## Core Behavioral Rules
 
-- **ALWAYS use shadcn-ui components** via the shadcn-ui MCP server
-- **ALWAYS call `get_component_demo` first** to understand proper usage patterns before implementing
-- **ALWAYS verify UI implementations** using Playwright MCP tools in the browser after building
-- **DO NOT use other UI libraries** (Material-UI, Ant Design, Chakra UI, etc.) unless explicitly requested
-- **DO NOT write custom UI components** for functionality that shadcn-ui already provides
-- **Leverage shadcn-ui blocks** for complete UI patterns (dashboards, login pages, settings panels, etc.)
+### 1. Default UI Library: shadcn-ui v4
 
-This ensures:
+**MANDATORY:** For ANY UI component task, use shadcn-ui v4. This is not negotiable.
 
-- Consistent design system across the application
-- Built-in accessibility features
-- Proper TypeScript typing
-- Radix UI primitives for robust component behavior
-- Tailwind CSS integration for styling
+**Workflow (MUST follow this order):**
+1. Call `mcp__shadcn-ui__get_component_demo` FIRST to see usage examples
+2. Study the demo to understand proper implementation patterns
+3. Only call `mcp__shadcn-ui__get_component` if deep customization is needed
+4. After implementation, verify with Playwright MCP tools in browser
 
-See the [shadcn/ui Component Integration](#shadcnui-component-integration) section below for detailed usage guidelines.
+**Prohibited:**
+- Using alternative UI libraries (Material-UI, Ant Design, Chakra UI, etc.) unless explicitly requested
+- Writing custom components for functionality shadcn-ui provides
+- Skipping the demo step (this causes implementation errors)
 
-## UI Development and Browser Verification
+**Why this matters:**
+- Ensures consistent design system (Tailwind CSS + Radix UI)
+- Prevents accessibility regressions (built-in WCAG 2.1 AA compliance)
+- Avoids duplicate code (components are reusable)
+- Maintains TypeScript type safety
 
-This project has the **Playwright MCP server** configured for browser automation, UI verification, and testing tasks.
+### 2. Browser Verification with Playwright MCP
 
-### When to Use Playwright MCP Tools
+**MANDATORY:** After implementing or modifying UI, verify in browser with Playwright MCP tools.
 
-**Automatically use Playwright MCP tools** whenever tasks involve:
+**When to use Playwright automatically:**
+- UI component implementation or changes
+- Form creation/modification
+- Layout changes
+- Accessibility verification
+- Visual/behavioral debugging
+- E2E test writing
 
-- **UI Development**: Verifying UI components and layouts work correctly in the browser after implementation
-- **Component Verification**: Testing that shadcn-ui components render and behave as expected
-- **UI Testing**: Writing or running tests for user interface components
-- **Browser Automation**: Automating interactions with web pages
-- **Visual Verification**: Taking screenshots or snapshots of UI states
-- **Form Interactions**: Filling out forms, clicking buttons, navigating pages
-- **E2E Testing**: End-to-end testing scenarios involving browser interactions
-- **UI Debugging**: Investigating UI issues, inspecting page elements
-- **Accessibility Testing**: Using browser snapshots to verify accessibility
-- **Integration Testing**: Testing web application flows and user journeys
+**Workflow:**
+1. Implement UI with shadcn-ui
+2. Use `mcp__playwright__browser_navigate` to open page
+3. Use `mcp__playwright__browser_snapshot` for accessibility inspection (prefer over screenshot)
+4. Use `mcp__playwright__browser_click`, `type`, `fill_form` for interaction testing
+5. Verify console messages and network requests if needed
 
-### Available Playwright Tools
+**Key tools:**
+- `browser_snapshot` - Accessibility snapshot (preferred for actions)
+- `browser_take_screenshot` - Visual verification
+- `browser_navigate` - Page navigation
+- `browser_click`, `type`, `fill_form` - Interactions
+- `browser_console_messages`, `network_requests` - Debugging
 
-The following MCP tools are available (all prefixed with `mcp__playwright__browser_`):
+---
 
-- `snapshot`: Capture accessibility snapshots (preferred over screenshots for actions)
-- `take_screenshot`: Take visual screenshots
-- `navigate`: Navigate to URLs
-- `click`: Click elements
-- `type`: Type text into fields
-- `fill_form`: Fill multiple form fields
-- `evaluate`: Run JavaScript on the page
-- `wait_for`: Wait for elements or conditions
-- `network_requests`: Monitor network activity
-- `console_messages`: View console output
-- And more...
+## shadcn-ui MCP Tool Usage
 
-### Behavior Guidelines
+### Tool Workflow by Task Type
 
-- **UI Development Workflow**: After implementing or modifying UI components, use Playwright tools to verify they work correctly in the browser
-- **Proactive Tool Usage**: When a task mentions UI, frontend, browser, or testing, immediately consider using Playwright tools
-- **Prefer Snapshots**: Use `browser_snapshot` over `take_screenshot` when you need to interact with the page
-- **Component Verification**: When building with shadcn-ui, use Playwright to verify the component renders and functions properly
-- **Test Writing**: When writing UI tests, use Playwright tools to validate the implementation
-- **Documentation**: Reference Playwright MCP capabilities when suggesting UI testing approaches
+**For any UI component:**
+1. `list_components` - If unsure which component to use
+2. `get_component_demo` - ALWAYS call this first (required)
+3. `get_component` - Only if customization needed
+4. `get_component_metadata` - For dependency/props info
 
-### Example Scenarios
+**For complete UI patterns (dashboard, login page, etc.):**
+1. `list_blocks` - Browse available blocks (optionally filter by category)
+2. `get_block` - Fetch complete block implementation
+3. `get_component_demo` - For individual component customization
 
-**User asks:** "Add a contact form to the page"
-**Action:**
+**For theme application:**
+1. `list_themes` - Browse available TweakCN themes
+2. `get_theme` - Preview theme details
+3. `apply_theme` - Apply theme (use `dryRun: true` for preview)
 
-1. Use shadcn-ui MCP to get form component demos
-2. Implement the contact form with shadcn-ui components
-3. Use Playwright MCP to navigate to the page and verify the form renders correctly
-4. Use Playwright to test form interactions (filling fields, validation, submission)
+### Critical: Demo-First Workflow
 
-**User asks:** "Test the login form"
-**Action:** Use Playwright MCP tools to navigate to the page, fill the form, and verify the behavior
+**This is the most important rule for shadcn-ui integration:**
 
-**User asks:** "Check if the button is visible"
-**Action:** Use `browser_snapshot` to inspect the page state
+```
+ALWAYS: get_component_demo → study patterns → implement
+NEVER: get_component → guess usage → debug errors
+```
 
-**User asks:** "Debug why the form submission isn't working"
-**Action:** Use Playwright tools to inspect console messages and network requests
+**Why demos are required:**
+- Shows HOW and WHY to use the component (not just what it is)
+- Reveals proper imports, props, event handlers, composition patterns
+- Demonstrates edge cases and common scenarios
+- Prevents API misuse that wastes time debugging
 
-## shadcn/ui Component Integration
+**Example (correct):**
+```
+User: "Add a dropdown menu to the header"
 
-**shadcn-ui v4 is the default UI library for this project.** The shadcn-ui MCP server is configured to provide direct access to component patterns, source code, and implementation examples.
+1. Call get_component_demo("dropdown-menu")
+2. Review demo patterns (trigger, content, items, submenus)
+3. Implement using demo patterns
+4. Verify with Playwright
+```
 
-**Use shadcn-ui for ALL UI development** unless explicitly directed otherwise.
+**Example (incorrect):**
+```
+User: "Add a dropdown menu"
 
-### When to Use shadcn-ui MCP Tools
+1. Call get_component("dropdown-menu") ❌
+2. Guess prop structure ❌
+3. Implement incorrectly ❌
+4. Debug for 30 minutes ❌
+```
 
-**Use shadcn-ui MCP tools for ALL UI development tasks**, including:
+---
 
-- **Any UI Component**: Buttons, forms, inputs, dialogs, dropdowns, tables, cards, etc.
-- **Layouts**: Building page layouts, dashboards, navigation, sidebars
-- **Forms**: Creating form inputs, validation, submission workflows
-- **Data Display**: Tables, lists, grids, charts integration
-- **Feedback**: Alerts, toasts, modals, loading states
-- **Navigation**: Menus, tabs, breadcrumbs, pagination
-- **Component Selection**: Choosing the right component for any UI need
-- **Implementation Patterns**: Learning how to properly use and configure components
-- **Design System**: Ensuring consistent UI patterns across the application
-- **Accessibility**: Leveraging built-in accessibility features
+## Playwright MCP Behavioral Guidelines
 
-### Available shadcn-ui Tools
+### When to Use (Automatic)
 
-The following MCP tools are available (all prefixed with `mcp__shadcn-ui__`):
+Trigger Playwright usage when the user's request mentions:
+- "UI", "interface", "component", "page", "form", "button", "layout"
+- "test", "verify", "check", "debug", "inspect"
+- "browser", "screenshot", "accessibility", "visual"
+- "click", "type", "fill", "navigate", "interact"
 
-- `list_components`: Get all available shadcn/ui v4 components
-- `get_component_demo`: **Get demo code showing how to use a component (USE THIS FIRST)**
-- `get_component`: Get the source code for a specific component
-- `get_component_metadata`: Get metadata for a component (dependencies, props, etc.)
-- `list_blocks`: Get available pre-built component blocks (dashboards, login forms, etc.)
-- `get_block`: Get source code for complete UI blocks
-- `get_directory_structure`: Explore the shadcn-ui repository structure
+### Workflow Patterns
 
-### Critical Workflow: Demo First, Then Source
+**UI Development Workflow:**
+```
+1. Implement UI with shadcn-ui (demo-first workflow)
+2. Navigate to page: browser_navigate("http://localhost:5173/path")
+3. Snapshot for inspection: browser_snapshot()
+4. Test interactions: browser_click(), browser_type(), etc.
+5. Check console: browser_console_messages() if errors occur
+6. Verify network: browser_network_requests() if data issues occur
+```
 
-**ALWAYS use `get_component_demo` BEFORE `get_component`**
+**Debugging Workflow:**
+```
+1. Navigate to problematic page
+2. Take snapshot to understand current state
+3. Inspect console messages for errors
+4. Check network requests for API issues
+5. Evaluate JavaScript if needed: browser_evaluate()
+```
 
-This is crucial because:
+**Accessibility Verification Workflow:**
+```
+1. Navigate to page
+2. Take snapshot (includes ARIA tree, roles, labels)
+3. Verify keyboard navigation: browser_press_key()
+4. Check focus management
+5. Validate screen reader announcements (from snapshot)
+```
 
-1. **Understanding Context**: Demos show you HOW and WHY to use a component
-2. **Usage Patterns**: See real-world examples with proper imports, props, and configurations
-3. **Common Scenarios**: Learn the most common use cases before diving into implementation
-4. **Props and API**: Understand the component's API through practical examples
-5. **Avoid Mistakes**: Prevent incorrect usage by seeing the recommended patterns first
+### Best Practices
 
-### Behavior Guidelines
+**Prefer snapshots over screenshots:**
+- Snapshots provide actionable accessibility tree
+- Screenshots are visual only (less useful for interactions)
+- Use screenshots for visual regression testing only
 
-- **Default First**: For ANY UI task, automatically use shadcn-ui components - this is not optional
-- **Demo First**: When implementing any shadcn/ui component, ALWAYS fetch the demo first with `get_component_demo`
-- **Explain Usage**: After fetching the demo, explain how the component is typically used
-- **Source Second**: Only fetch the source code with `get_component` if you need to understand internals or customize
-- **Metadata for Context**: Use `get_component_metadata` to understand dependencies and requirements
-- **Blocks for Complex UIs**: Suggest `list_blocks` and `get_block` for complete UI patterns like dashboards or login pages
-- **List First**: When unsure which component to use, call `list_components` to see all options
-- **No Alternatives**: Do not suggest or use alternative UI libraries unless the user explicitly requests them
+**Always clean up:**
+- Playwright server manages lifecycle, but be mindful of resources
+- Close browser when done with extended testing sessions
 
-### Example Scenarios
+**Combine with unit tests:**
+- Playwright for E2E and visual verification
+- Vitest for component logic and hooks
+- Don't replace unit tests with E2E tests
 
-**User asks:** "Add a button to the form"
-**Action:**
+---
 
-1. Call `get_component_demo` with componentName: "button" to see usage examples
-2. Explain the different button variants and use cases from the demo
-3. Only call `get_component` if customization of the button source is needed
+## Example Task Workflows
 
-**User asks:** "I need a data table with sorting"
-**Action:**
+### Task: "Create a contact form"
 
-1. Call `get_component_demo` with componentName: "table" to see implementation patterns
-2. Show how to integrate sorting from the demo examples
-3. Fetch source with `get_component` only if deep customization is required
+```
+1. Call get_component_demo("form") → understand form patterns
+2. Call get_component_demo("input") → understand input variants
+3. Call get_component_demo("button") → understand button states
+4. Implement form using demo patterns (Zod validation, React Hook Form)
+5. Navigate to page with browser_navigate()
+6. Test form interactions with browser_fill_form()
+7. Verify validation with browser_type() (invalid data)
+8. Check console for errors
+9. Verify success submission flow
+```
 
-**User asks:** "Create a settings page with tabs"
-**Action:**
+### Task: "Build a settings page with tabs"
 
-1. Call `get_component_demo` with componentName: "tabs" first
-2. Review the demo to understand tab structure and navigation patterns
-3. Implement following the demo patterns
+```
+1. Call list_blocks(category: "settings") → check for pre-built blocks
+2. If block exists: get_block() and adapt
+3. If no block: get_component_demo("tabs") → understand tab patterns
+4. Implement tabs with shadcn-ui components
+5. Navigate and verify with browser_snapshot()
+6. Test keyboard navigation (Tab, Arrow keys, Enter)
+7. Verify ARIA attributes in snapshot
+```
 
-**User asks:** "What UI components are available?"
-**Action:** Call `list_components` to show all available shadcn/ui components
+### Task: "Debug why button click isn't working"
 
-**User asks:** "Build a dashboard layout"
-**Action:**
+```
+1. Navigate to page with browser_navigate()
+2. Take snapshot to see button state (enabled/disabled, ARIA)
+3. Click button with browser_click()
+4. Check console_messages() for JavaScript errors
+5. Check network_requests() for failed API calls
+6. Use browser_evaluate() to inspect button state/handlers if needed
+7. Fix issue based on findings
+```
 
-1. Call `list_blocks` with category: "dashboard"
-2. Call `get_block` to fetch complete dashboard patterns
-3. Reference component demos as needed for individual components
+### Task: "Apply a dark theme"
 
-### Important Notes
+```
+1. Call list_themes() → browse available themes
+2. Call get_theme("theme-name") → preview theme
+3. Call apply_theme(query: "dark", dryRun: true) → preview application
+4. Review preview, then apply_theme(query: "dark", dryRun: false)
+5. Verify with browser_take_screenshot() → visual verification
+```
 
-- **v4 Specific**: These tools access shadcn/ui v4, which may have different APIs than earlier versions
-- **Always Demo First**: This cannot be overstated - demos prevent implementation errors and save time
-- **Blocks for Speed**: Use blocks for complete UI patterns rather than building from scratch
-- **Metadata Matters**: Check metadata before using a component to ensure all dependencies are installed
+---
+
+## Important Notes
+
+**shadcn-ui v4 Specifics:**
+- This project uses v4, which has different APIs than v0-v3
+- Always use the MCP tools (they access v4 specifically)
+- Don't reference v3 documentation or Stack Overflow answers
+
+**Context7 Integration:**
+- Context7 MCP available for library documentation queries
+- Use for React, TypeScript, TanStack Query, Nostr, Arweave docs
+- Always resolve library ID first with `resolve-library-id` before `query-docs`
+
+**File Organization:**
+- Follow feature module pattern: `src/features/{domain}/hooks/`, `components/`, `pages/`
+- See project-context.md for detailed architecture patterns
+- Co-locate tests with implementation files
+
+**Testing Requirements:**
+- Write tests for all new features (Vitest + Playwright)
+- Target 80% coverage (will be enforced when coverage reporting is configured)
+- See project-context.md for test pyramid strategy
+
+**Security:**
+- Never use `dangerouslySetInnerHTML`
+- Never add `rehype-raw` to markdown rendering
+- Always verify Nostr event signatures
+- See project-context.md for full security posture
+
+---
+
+## When in Doubt
+
+1. **Check project-context.md first** - Contains all technical context, patterns, conventions
+2. **Call get_component_demo** - For any UI task, start with the demo
+3. **Verify in browser** - Use Playwright MCP after UI changes
+4. **Ask the user** - If unclear about requirements or approach
+
+---
+
+**Last Updated:** 2026-02-27 (Epic 2 complete)
