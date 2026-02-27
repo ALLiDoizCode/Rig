@@ -1,0 +1,64 @@
+# Semgrep configuration for Rig frontend security scanning
+# Install: brew install semgrep (macOS) or pip install semgrep
+# Run: npm run lint:security
+
+rules:
+  # XSS Prevention
+  - id: react-dangerouslysetinnerhtml
+    pattern: dangerouslySetInnerHTML
+    message: Avoid dangerouslySetInnerHTML as it can lead to XSS vulnerabilities
+    severity: ERROR
+    languages: [typescript]
+    paths:
+      include:
+        - src/
+
+  - id: rehype-raw-usage
+    pattern: rehype-raw
+    message: Do not use rehype-raw plugin as it allows HTML rendering in markdown (XSS risk)
+    severity: ERROR
+    languages: [typescript]
+    paths:
+      include:
+        - src/
+
+  # Injection Prevention
+  - id: unsafe-url-protocol
+    message: Unsafe URL protocol detected (javascript or data) - potential XSS vector
+    severity: WARNING
+    languages: [typescript]
+    patterns:
+      - pattern-either:
+          - pattern: $URL.startsWith("javascript:")
+          - pattern: $URL.includes("javascript:")
+          - pattern: $URL.startsWith("data:")
+    paths:
+      include:
+        - src/
+
+  # Crypto Security
+  - id: weak-crypto-algorithm
+    message: Weak cryptographic algorithm detected (use sha256 or stronger)
+    severity: WARNING
+    languages: [typescript]
+    patterns:
+      - pattern-either:
+          - pattern: crypto.createHash("md5")
+          - pattern: crypto.createHash("sha1")
+    paths:
+      include:
+        - src/
+
+  # Environment Variable Exposure
+  - id: exposed-secrets
+    message: Potential secret exposure via console.log
+    severity: ERROR
+    languages: [typescript]
+    patterns:
+      - pattern-either:
+          - pattern: console.log($PRIVATE_KEY)
+          - pattern: console.log($API_KEY)
+          - pattern: console.log($SECRET)
+    paths:
+      include:
+        - src/
