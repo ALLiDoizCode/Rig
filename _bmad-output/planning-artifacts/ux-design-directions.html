@@ -127,6 +127,34 @@
         </p>
     </div>
 
+    <!-- DESIGN DECISION (2026-02-26) -->
+    <div style="max-width: 1000px; margin: 0 auto 40px; padding: 32px 40px; background: linear-gradient(135deg, #1a2332 0%, #1a1a2e 100%); border: 1px solid #334155; border-radius: 12px;">
+        <h2 style="font-size: 24px; font-weight: 700; color: #60a5fa; margin-bottom: 16px;">Refined Design Decision (2026-02-26)</h2>
+        <p style="font-size: 16px; color: #cbd5e1; line-height: 1.8; margin-bottom: 16px;">
+            <strong style="color: #f1f5f9;">Selected Strategy: Forgejo Layout Patterns + Rig's Own Visual Identity + Progressive Disclosure</strong>
+        </p>
+        <p style="font-size: 14px; color: #94a3b8; line-height: 1.8; margin-bottom: 16px;">
+            Rig follows <strong style="color: #cbd5e1;">Forgejo's layout patterns</strong> (flex-list repo display, tab navigation, filter/sort bars, file tree structure) while establishing <strong style="color: #cbd5e1;">Rig's own visual identity</strong> (color palette, typography, border radius, shadow depth). Same bones, different skin. Forgejo's open-source templates (in <code style="background: #334155; padding: 2px 6px; border-radius: 4px;">forgejo/templates/</code>) and CSS (in <code style="background: #334155; padding: 2px 6px; border-radius: 4px;">forgejo/web_src/css/</code>) serve as layout references. Codeberg (codeberg.org) serves as the live visual reference.
+        </p>
+        <p style="font-size: 14px; color: #94a3b8; line-height: 1.8; margin-bottom: 16px;">
+            This refines the original Direction 2 (GitHub Evolved) + Direction 5 (Progressive Disclosure) selection. The key change: the primary layout reference shifts from GitHub to <strong style="color: #cbd5e1;">Forgejo</strong> because its source code is available for direct inspection, and its community overlaps with Rig's early adopters. Note: NIP-34 is a Nostr protocol standard for git collaboration &mdash; it is not specific to Forgejo/Gitea. Forgejo is chosen as a layout reference purely for its open-source UI quality and community alignment.
+        </p>
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px;">
+            <div style="background: #0f172a; padding: 16px; border-radius: 8px; border: 1px solid #1e293b;">
+                <h3 style="font-size: 13px; color: #60a5fa; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px;">Layouts &rarr; Forgejo</h3>
+                <p style="font-size: 13px; color: #94a3b8; line-height: 1.6;">Flex-list, tab nav, filter bars, file trees, commit lists. Reference forgejo/templates/ for structure.</p>
+            </div>
+            <div style="background: #0f172a; padding: 16px; border-radius: 8px; border: 1px solid #1e293b;">
+                <h3 style="font-size: 13px; color: #a78bfa; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px;">Visual Identity &rarr; Rig</h3>
+                <p style="font-size: 13px; color: #94a3b8; line-height: 1.6;">Own color palette, typography, borders, shadows. Distinctive product — not a Forgejo skin.</p>
+            </div>
+            <div style="background: #0f172a; padding: 16px; border-radius: 8px; border: 1px solid #1e293b;">
+                <h3 style="font-size: 13px; color: #34d399; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px;">Novel UX &rarr; Rig Original</h3>
+                <p style="font-size: 13px; color: #94a3b8; line-height: 1.6;">Relay status, Nostr verification, Arweave permanence, progressive disclosure. No Forgejo equivalent.</p>
+            </div>
+        </div>
+    </div>
+
     <div class="showcase-grid">
         <div id="direction-1"></div>
         <div id="direction-2"></div>

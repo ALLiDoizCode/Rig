@@ -123,11 +123,12 @@ Rig serves **six distinct personas** with different motivations but shared need 
 - **Journey Design**: Turn Sam's "Aha! These URLs won't rot" moment into designed experience
 - **Growth Path**: Help Anonymous Visitor become Casey (advocate who builds on the platform)
 
-**3. GitHub Familiarity Pattern Leverage**
-- **Insight**: Users have muscle memory for GitHub's UX (layouts, terminology, keyboard shortcuts)
-- **Strategy**: Match GitHub patterns exactly, then add decentralized superpowers on top
-- **Benefit**: Near-zero learning curve for developers, immediate productivity
-- **Examples**: Same repository structure, same issue tracker layout, same file browser navigation
+**3. Forgejo Layout Pattern Leverage**
+- **Insight**: Users have muscle memory for git forge UX (layouts, terminology, keyboard shortcuts). Forgejo is our primary visual reference because it's open-source (we have its full template/CSS source in `forgejo/`), and its community overlaps with Rig's early adopters.
+- **Strategy**: Follow Forgejo's layout patterns (information architecture, page structure, component placement) while establishing Rig's own visual identity (color palette, typography, border radius, shadow depth). Same bones, different skin.
+- **Benefit**: Near-zero learning curve for developers, immediate productivity, with a distinctive Rig brand
+- **Examples**: Forgejo's flex-list repo layout, tab navigation, filter/sort bars, file tree structure — all reimplemented in React/shadcn with Rig's visual identity
+- **Key Distinction**: Forgejo is the layout reference, not a visual clone. Rig has its own color palette, typography weight, and design personality. Forgejo's templates are in `forgejo/templates/` and CSS in `forgejo/web_src/css/` for developer reference.
 
 **4. Offline-First as Speed Advantage**
 - **Opportunity**: Service worker caching + IndexedDB makes second visits FASTER than GitHub (no server round-trip)
@@ -457,14 +458,17 @@ Users form lasting impressions in the first seconds/minutes. Rig must nail these
 
 **3. Familiarity First, Innovation Second**
 
-**Principle:** Match GitHub UX exactly, then add decentralized superpowers on top.
+**Principle:** Follow Forgejo's layout patterns, then add Rig's decentralized superpowers on top with Rig's own visual identity.
 
 **Application:**
-- **GitHub Pattern:** Repository has Code | Issues | Pull Requests tabs (familiar)
-- **Rig Innovation:** Each tab shows Nostr relay source badges (innovation)
-- **Result:** Users navigate with muscle memory, discover decentralization naturally
+- **Forgejo Layout Pattern:** Repository has Code | Issues | Pull Requests tabs, flex-list repo cards, filter/sort bars (familiar structure)
+- **Rig Visual Identity:** Own color palette, typography, spacing rhythm, shadow depth (distinctive look)
+- **Rig Innovation:** Each tab shows Nostr relay source badges, Arweave permanence indicators (decentralized superpowers)
+- **Result:** Users navigate with muscle memory from git forges, experience Rig's unique brand, discover decentralization naturally
 
-**Rationale:** Developers have 15+ years of GitHub muscle memory. Breaking conventions adds friction. Matching conventions builds trust, then surprises with decentralized benefits.
+**Reference:** Forgejo's open-source templates (`forgejo/templates/`) and CSS (`forgejo/web_src/css/`) serve as the layout reference. Developers should pull up Codeberg (https://codeberg.org) as a visual reference alongside Forgejo source when implementing pages.
+
+**Rationale:** Developers have years of git forge muscle memory. Breaking layout conventions adds friction. Matching layout conventions builds trust. But Rig needs its own visual identity — not a Forgejo skin, but a distinctive product that *feels* familiar in structure while looking like its own thing.
 
 **4. Performance Delays Must Tell a Story**
 
@@ -956,9 +960,9 @@ The emotional shift is from *"I trust GitHub because it's big and reliable"* to 
 
 ### Inspiring Products Analysis
 
-We analyzed two primary inspiration sources that directly inform Rig's UX design:
+We analyzed two primary inspiration sources that directly inform Rig's UX design. **Forgejo is the primary layout reference** because its source code is available in our repository (`forgejo/`) for direct template and CSS inspection. GitHub serves as secondary context for understanding broader git forge UX conventions.
 
-**1. GitHub - Industry Standard for Code Hosting**
+**1. GitHub - Industry Standard for Code Hosting (Secondary Reference)**
 
 **Core Problem Solved Elegantly:**
 - **Code collaboration at scale**: Millions of developers can discover, contribute to, and maintain projects
@@ -996,7 +1000,7 @@ We analyzed two primary inspiration sources that directly inform Rig's UX design
 
 ---
 
-**2. Forgejo - Self-Hosted Git Platform**
+**2. Forgejo - Self-Hosted Git Platform (Primary Layout Reference)**
 
 **Core Problem Solved Elegantly:**
 - **Self-hosted Git freedom**: Full GitHub-like experience without SaaS lock-in
@@ -2422,15 +2426,45 @@ The mechanics ensure that every interaction teaches users about decentralization
 
 ## Visual Design Foundation
 
+### Design Philosophy: Forgejo Layouts + Rig Identity
+
+**Rig follows Forgejo's layout patterns while establishing its own visual identity.** This means:
+
+- **Layout & Information Architecture** → From Forgejo: flex-list repo display, tab navigation, filter/sort bars, file tree structure, commit list format. Developers should reference Forgejo's templates in `forgejo/templates/` and Codeberg (https://codeberg.org) when building pages.
+- **Visual Identity** → Rig's own: color palette, typography weight, border radius language, shadow depth, spacing rhythm. Rig should feel distinctive — not a Forgejo skin, but a product that's structurally familiar while visually its own.
+- **Novel UX Elements** → Rig-original: relay status indicators, Nostr signature verification badges, Arweave permanence markers, progressive disclosure panels. These have no Forgejo equivalent and are Rig's unique design contribution.
+
+### Forgejo Layout Reference Mapping
+
+Each Rig page maps to a specific Forgejo template for layout guidance. Developers should reference these when implementing:
+
+| Rig Page | Epic | Forgejo Template Reference | Layout Pattern | Rig-Specific Additions |
+|----------|------|---------------------------|----------------|----------------------|
+| Repository List | 2 | `explore/repo_list.tmpl` + `shared/repo_search.tmpl` | Flex-list + filter/sort bar | Relay source indicators (no stars/forks in Nostr) |
+| Repository Card | 2 | `explore/repo_list.tmpl` (list item) | Flex-list row: icon, name, desc, metadata | Nostr signature badge, relay count |
+| Repository Detail | 3 | `repo/home.tmpl` + tab navigation | Tab layout: Code / Issues / PRs | Arweave verification tab, relay status header |
+| File Browser | 3 | `repo/view.tmpl` + `repo/file_tree.tmpl` | Tree sidebar + file content viewer | Arweave permalink per file |
+| File Viewer | 3 | `repo/view_file.tmpl` | Code block + metadata header | Arweave TX link, permanence badge |
+| Commit History | 4 | `repo/commits.tmpl` | Commit list with avatar + message | Nostr event ID, signature verification status |
+| Commit Detail | 4 | `repo/commit.tmpl` + `repo/diff.tmpl` | Diff viewer + file change tree | Arweave transaction verification |
+| Issue List | 5 | `repo/issue/list.tmpl` | Issue table + filter bar | Nostr threading model |
+| Issue Detail | 5 | `repo/issue/view.tmpl` | Threaded comment timeline | Nostr pubkey identity display |
+| PR List | 5 | `repo/issue/list.tmpl` (shared pattern) | Same as issues + merge status | Nostr patch events |
+| Relay Dashboard | 6 | *No Forgejo equivalent* | **Rig-original design** | Full relay health monitoring UI |
+| Verification UI | 6 | *No Forgejo equivalent* | **Rig-original design** | Signature/Arweave inspector |
+| Educational Tooltips | 7 | *No Forgejo equivalent* | **Rig-original design** | Decentralization explainers |
+
+**Note:** Epics 6-7 pages have no Forgejo counterpart — these are where Rig's unique UX identity is strongest.
+
 ### Color System
 
-**Foundation Strategy: GitHub-Compatible Neutrals + Decentralized Infrastructure Accents**
+**Foundation Strategy: Rig's Own Palette — Professional Neutrals + Decentralized Infrastructure Accents**
 
-Rig's color system balances familiar GitHub aesthetics with novel decentralized infrastructure visualization. The palette ensures users feel at home while gradually understanding new concepts through color-coded system status.
+Rig's color system establishes a distinctive visual identity while maintaining professional readability. The palette should feel trustworthy and infrastructure-grade — not a clone of any existing forge, but recognizably its own product.
 
 **Base Palette:**
 
-**Slate Neutrals (GitHub-Compatible)**
+**Slate Neutrals**
 ```
 slate-50:  #f8fafc  - Backgrounds, subtle surfaces
 slate-100: #f1f5f9  - Hover states, secondary backgrounds  
@@ -2445,7 +2479,7 @@ slate-900: #0f172a  - Maximum contrast text
 slate-950: #020617  - Dark mode backgrounds
 ```
 
-**Rationale:** Slate provides professional, neutral base that matches GitHub's aesthetic. Users perceive Rig as "GitHub alternative" not "different platform."
+**Rationale:** Slate provides a professional, neutral base. Rig should feel like serious infrastructure — trustworthy and reliable — while its accent colors (relay greens, permanence purples, Arweave blues) differentiate it from other forges.
 
 
 **Semantic Color System:** Primary Blue (interactive), Success Green (relay active), Warning Yellow (relay pending), Error Red (relay timeout), Permanence Purple (Arweave).
@@ -2761,18 +2795,28 @@ Each direction was evaluated against three critical factors:
 
 ### Synthesis: The Combined Approach
 
-**Selected Strategy: GitHub Evolved (aesthetic foundation) + Progressive Disclosure (information architecture pattern)**
+**Selected Strategy: Forgejo Layout Patterns (structural foundation) + Progressive Disclosure (information architecture) + Rig Visual Identity (distinctive look)**
 
-Rather than treating these as competing directions, we combine them into a unified design system:
+Rather than treating these as competing directions, we combine them into a unified design system. The key refinement (decided 2026-02-26): Rig follows Forgejo's *layout patterns* but establishes its *own visual identity* — same bones, different skin.
 
-#### Base Layer: GitHub Evolved Aesthetic
-- Tab navigation (Repositories | Issues | Pull Requests)
-- Dark mode color palette (#0d1117 backgrounds, #c9d1d9 text)
-- Familiar repository cards with stars/forks/language
+#### Base Layer: Forgejo Layout Patterns
+- Tab navigation (Code | Issues | Pull Requests) — same structure as Forgejo
+- Flex-list repository display — Forgejo's proven layout for repo lists
+- Filter/sort bar above lists — Forgejo's search + dropdown filter pattern
+- File tree + content split view — Forgejo's `repo/view.tmpl` pattern
 - Search box + action buttons in expected positions
-- GitHub-compatible spacing and density
 
-**Rationale:** Establishes comfort and trust through recognition. Users immediately understand "this is like GitHub, but permanent."
+**Reference:** Developers should pull up Codeberg (https://codeberg.org) and Forgejo templates in `forgejo/templates/` as layout references. See the Forgejo Layout Reference Mapping table in the Visual Design Foundation section.
+
+**Rationale:** Establishes comfort and trust through structural recognition. Users immediately understand "this navigates like a forge I know." Forgejo is the reference (not GitHub) because its source is available in our repo for direct inspection.
+
+#### Visual Identity Layer: Rig's Own Design Language
+- Rig's own color palette — not a Forgejo/GitHub clone, but a distinctive product identity
+- Own typography weight, border radius language, shadow depth, spacing rhythm
+- Implemented via shadcn/ui theme customization (CSS variables in `index.css`)
+- Dark/light mode support with Rig's own palette for each
+
+**Rationale:** Rig must be recognizable as its own product. Following Forgejo's layouts provides familiarity; Rig's visual identity provides distinctiveness. Think of how Codeberg uses Forgejo's code but has its own blue brand identity.
 
 #### Information Architecture: Progressive Disclosure Pattern
 - Default view: Clean repository cards (name, description, stats)
