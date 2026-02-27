@@ -26,17 +26,6 @@ import { test, expect, type Page } from '@playwright/test'
 const DATA_LOAD_TIMEOUT = 30_000
 
 /**
- * Wait for repository cards to appear on the page.
- */
-async function waitForCards(page: Page, timeout = DATA_LOAD_TIMEOUT) {
-  await page.waitForFunction(
-    () => document.querySelectorAll('article').length > 0,
-    undefined,
-    { timeout }
-  )
-}
-
-/**
  * Wait for the app to finish loading (any terminal state).
  */
 async function waitForAppLoaded(page: Page, timeout = DATA_LOAD_TIMEOUT) {
@@ -551,21 +540,11 @@ test.describe('RepoCard - Hover State', () => {
     if (count > 0) {
       const cardDiv = articles.first().locator('div').first()
 
-      // Get initial box-shadow
-      const initialShadow = await cardDiv.evaluate(el => {
-        return window.getComputedStyle(el).boxShadow
-      })
-
       // Hover over the card
       await cardDiv.hover()
 
       // Wait briefly for transition to apply
       await page.waitForTimeout(300)
-
-      // Get hover box-shadow
-      const hoverShadow = await cardDiv.evaluate(el => {
-        return window.getComputedStyle(el).boxShadow
-      })
 
       // Shadow should change on hover (may be "none" initially, and a shadow value on hover)
       // Note: In some CI environments transitions may not render, so we check the class exists
