@@ -14,10 +14,12 @@
  * Story 2.2: Repository Card Component with Metadata (RepoCard integration)
  * Story 2.3: Client-Side Search and Filtering
  * Story 2.5: Relay Status Indicators (relay metadata passed to RepoCard)
+ * Story 2.6: Real-Time Repository Updates (WebSocket subscription)
  */
 import { useState, useEffect, useRef } from 'react'
 import { useRepositories } from '@/features/repository/hooks/useRepositories'
 import { useRelayStatus } from '@/features/repository/hooks/useRelayStatus'
+import { useRealtimeRepositories } from '@/features/repository/hooks/useRealtimeRepositories'
 import { RepoCard } from '@/features/repository/RepoCard'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Button } from '@/components/ui/button'
@@ -37,7 +39,8 @@ function RepositoryGridSkeleton() {
         {Array.from({ length: 6 }).map((_, i) => (
           <div
             key={i}
-            className="flex flex-col rounded-xl border bg-card py-6 shadow-sm"
+            className="flex flex-col rounded-xl border bg-card py-6 shadow-sm animate-in fade-in duration-300"
+            style={{ animationDelay: `${i * 75}ms`, animationFillMode: 'backwards' }}
           >
             {/* Header skeleton */}
             <div className="px-6 pb-3">
@@ -66,6 +69,7 @@ function RepositoryGridSkeleton() {
 }
 
 export function Component() {
+  useRealtimeRepositories()
   const { data, status, error, refetch } = useRepositories()
   const { meta: relayMeta } = useRelayStatus()
 
@@ -128,7 +132,7 @@ export function Component() {
       {status === 'pending' && <RepositoryGridSkeleton />}
 
       {status === 'error' && (
-        <div role="alert" className="flex flex-col items-center justify-center py-16 space-y-4">
+        <div role="alert" className="flex flex-col items-center justify-center py-16 space-y-4 animate-in fade-in duration-300">
           <div className="rounded-full bg-destructive/10 p-3">
             <AlertCircleIcon className="size-6 text-destructive" />
           </div>
@@ -150,7 +154,7 @@ export function Component() {
       )}
 
       {status === 'success' && data.length === 0 && (
-        <div className="flex flex-col items-center justify-center py-16 space-y-4">
+        <div className="flex flex-col items-center justify-center py-16 space-y-4 animate-in fade-in duration-300">
           <div className="rounded-full bg-muted p-3">
             <InboxIcon className="size-6 text-muted-foreground" />
           </div>
@@ -186,7 +190,7 @@ export function Component() {
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="absolute right-1 top-1/2 -translate-y-1/2 size-7 min-h-[44px] min-w-[44px] text-muted-foreground hover:text-foreground"
+                  className="absolute right-1 top-1/2 -translate-y-1/2 size-8 text-muted-foreground hover:text-foreground transition-colors"
                   onClick={handleClear}
                   aria-label="Clear search"
                 >
@@ -208,7 +212,7 @@ export function Component() {
               ))}
             </div>
           ) : (
-            <div className="flex flex-col items-center justify-center py-16 space-y-4">
+            <div className="flex flex-col items-center justify-center py-16 space-y-4 animate-in fade-in duration-300">
               <div className="rounded-full bg-muted p-3">
                 <SearchIcon className="size-6 text-muted-foreground" />
               </div>

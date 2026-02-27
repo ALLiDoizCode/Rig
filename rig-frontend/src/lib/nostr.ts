@@ -1,4 +1,5 @@
 import { SimplePool } from 'nostr-tools/pool'
+import type { SubCloser } from 'nostr-tools/pool'
 import { verifyEvent } from 'nostr-tools/pure'
 import type { Event as NostrEvent, Filter } from 'nostr-tools'
 import {
@@ -308,6 +309,43 @@ export async function fetchPatches(repoId: string, limit = 50): Promise<Patch[]>
 export async function fetchComments(eventId: string, limit = 100): Promise<Comment[]> {
   const events = await queryEvents({ kinds: [COMMENT], '#e': [eventId], limit })
   return validateAndTransform(events, CommentEventSchema, eventToComment, 'Comment')
+}
+
+/**
+ * Subscribe to real-time repository announcement events (kind 30617).
+ *
+ * Wraps pool.subscribeMany() to subscribe to all configured relays for
+ * repository announcement events. Verifies event signatures before passing
+ * events to the callback. Invalid events are silently discarded with a
+ * console warning.
+ *
+ * @param onEvent - Callback invoked with each valid, verified event
+ * @returns SubCloser handle -- call .close() to unsubscribe
+ *
+ * Story 2.6: Real-Time Repository Updates
+ */
+export function subscribeToRepositories(
+  onEvent: (event: NostrEvent) => void
+): SubCloser {
+  // Use `since` to only receive events created after subscription starts.
+  // Without this, relays replay ALL stored kind 30617 events on connect,
+  // which would spam toast notifications for every historical repository.
+  const since = Math.floor(Date.now() / 1000)
+
+  return pool.subscribeMany(
+    [...DEFAULT_RELAYS],
+    { kinds: [REPO_ANNOUNCEMENT], since },
+    {
+      onevent: (event: NostrEvent) => {
+        const isValid = verifyEvent(event)
+        if (!isValid) {
+          console.warn('Invalid signature rejected in subscription:', event.id)
+          return
+        }
+        onEvent(event)
+      }
+    }
+  )
 }
 
 /**
