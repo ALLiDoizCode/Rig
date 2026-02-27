@@ -7,6 +7,7 @@
 *.png
 !forgejo/**/*.png
 !rig-frontend/public/**/*.svg
+!rig-frontend/e2e/**/*-snapshots/*.png
 
 # Node modules (should never be tracked at monorepo root)
 node_modules/

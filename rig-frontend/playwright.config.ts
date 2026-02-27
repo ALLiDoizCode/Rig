@@ -25,6 +25,19 @@ export default defineConfig({
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
   },
+  /* Visual regression testing configuration */
+  expect: {
+    toHaveScreenshot: {
+      /* Maximum pixel ratio difference allowed (0.1 = 10%) */
+      maxDiffPixelRatio: 0.01,
+      /* Threshold for individual pixel color difference (0-1) */
+      threshold: 0.2,
+      /* Use consistent screenshot options */
+      animations: 'disabled',
+      /* Compare against screenshots in the same platform folder */
+      stylePath: undefined,
+    },
+  },
   projects: [
     {
       name: 'chromium',
