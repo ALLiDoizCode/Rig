@@ -1,29 +1,49 @@
 /**
- * File browser page
+ * File Browser Page
  *
- * Placeholder component for file tree navigation and viewing.
- * Will be replaced with actual file browser UI in Epic 3.
+ * Story 3.1: File Tree Navigation Component
+ *
+ * Integrates the FileBrowser component with routing to provide file navigation.
+ * For Epic 3, we're using a hardcoded manifestId placeholder.
+ * Future stories will integrate with NIP-34 branch events to discover manifest IDs.
  */
 import { useParams } from 'react-router'
+import { FileBrowser } from '@/features/repository/components/FileBrowser'
 
 export function Component() {
   const { owner, repo, branch, '*': filePath } = useParams()
 
+  // TODO: In a future story, fetch the actual manifestId from repository metadata
+  // For now, using a placeholder to demonstrate the file tree UI
+  const manifestId = 'demo-manifest-id'
+
   return (
-    <div>
-      <h1>
-        File Browser: {owner}/{repo}
-      </h1>
-      <p>
-        <strong>Branch:</strong> {branch}
-      </p>
-      {filePath && (
-        <p>
-          <strong>Path:</strong> {filePath}
-        </p>
+    <FileBrowser
+      manifestId={manifestId}
+      owner={owner}
+      repo={repo}
+      branch={branch}
+    >
+      {filePath ? (
+        <div className="p-6">
+          <h1 className="text-2xl font-bold mb-4">
+            {filePath}
+          </h1>
+          <p className="text-muted-foreground">
+            File viewer coming in a future story.
+          </p>
+        </div>
+      ) : (
+        <div className="p-6">
+          <h1 className="text-2xl font-bold mb-4">
+            {owner}/{repo}
+          </h1>
+          <p className="text-muted-foreground">
+            Select a file from the tree to view its contents.
+          </p>
+        </div>
       )}
-      <p>File browser coming soon — implemented in Epic 3</p>
-    </div>
+    </FileBrowser>
   )
 }
 

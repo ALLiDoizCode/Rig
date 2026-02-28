@@ -21,6 +21,7 @@ export interface RigError {
     | 'VALIDATION_FAILED'
     | 'GATEWAY_ERROR'
     | 'ARNS_RESOLUTION_FAILED'
+    | 'MANIFEST_NOT_FOUND'
   /** Technical details for logging and debugging */
   message: string
   /** User-friendly message for UI display */

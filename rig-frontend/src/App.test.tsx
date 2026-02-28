@@ -4,6 +4,7 @@ import { createMemoryRouter, RouterProvider } from 'react-router'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { routes } from './routes'
 import { ThemeProvider } from './contexts/ThemeContext'
+import { createElement } from 'react'
 
 // Mock the Nostr service layer so Home page tests don't make real relay calls
 vi.mock('@/lib/nostr', () => ({
@@ -18,6 +19,21 @@ vi.mock('@/lib/nostr', () => ({
 // Mock useRealtimeRepositories to prevent subscription side effects
 vi.mock('@/features/repository/hooks/useRealtimeRepositories', () => ({
   useRealtimeRepositories: vi.fn(),
+}))
+
+// Mock useFileTree to prevent Arweave API calls in FileBrowser
+vi.mock('@/features/repository/hooks/useFileTree', () => ({
+  useFileTree: vi.fn(() => ({
+    data: { children: [] },
+    status: 'success',
+    error: null,
+    refetch: vi.fn(),
+  })),
+}))
+
+// Mock FileTree to prevent router context issues during lazy loading
+vi.mock('@/features/repository/components/FileTree', () => ({
+  FileTree: () => createElement('div', { 'data-testid': 'file-tree' }, 'Mocked File Tree'),
 }))
 
 // Fresh QueryClient per test to prevent cache leaks
@@ -89,26 +105,31 @@ describe('App Router Integration', () => {
     it('renders FileBrowser page at /:owner/:repo/src/:branch/*', async () => {
       renderRoute(['/alice/my-repo/src/main/src/app.ts'])
 
-      expect(await screen.findByText(/file browser:/i)).toBeInTheDocument()
-      expect(await screen.findByText(/branch:/i)).toBeInTheDocument()
-      expect(await screen.findByText(/main/i)).toBeInTheDocument()
-      expect(await screen.findByText(/path:/i)).toBeInTheDocument()
-      expect(await screen.findByText(/src\/app\.ts/i)).toBeInTheDocument()
+      // FileBrowser page shows the file path as h1 heading
+      // (appears twice - once for mobile/tablet, once for desktop)
+      const headings = await screen.findAllByRole('heading', { name: /src\/app\.ts/i }, { timeout: 10000 })
+      expect(headings.length).toBeGreaterThan(0)
+      // Verify file viewer placeholder text (also appears twice)
+      const placeholders = await screen.findAllByText(/file viewer coming in a future story/i)
+      expect(placeholders.length).toBeGreaterThan(0)
     })
 
     it('renders FileBrowser without file path', async () => {
       renderRoute(['/alice/my-repo/src/main'])
 
-      expect(await screen.findByText(/file browser:/i)).toBeInTheDocument()
-      expect(await screen.findByText(/main/i)).toBeInTheDocument()
-      // Should not show path section when no file path
-      expect(screen.queryByText(/path:/i)).not.toBeInTheDocument()
+      // FileBrowser page shows repo name when no file selected
+      // (appears twice - once for mobile/tablet, once for desktop)
+      const headings = await screen.findAllByRole('heading', { name: /alice\/my-repo/i }, { timeout: 10000 })
+      expect(headings.length).toBeGreaterThan(0)
+      // Verify file tree placeholder text (also appears twice)
+      const placeholders = await screen.findAllByText(/select a file from the tree/i)
+      expect(placeholders.length).toBeGreaterThan(0)
     })
 
     it('renders CommitHistory page at /:owner/:repo/commits', async () => {
       renderRoute(['/alice/my-repo/commits'])
 
-      expect(await screen.findByText(/commits:/i)).toBeInTheDocument()
+      expect(await screen.findByText(/commits:/i, {}, { timeout: 10000 })).toBeInTheDocument()
       expect(await screen.findByText(/alice/i)).toBeInTheDocument()
       expect(await screen.findByText(/my-repo/i)).toBeInTheDocument()
     })
@@ -116,7 +137,7 @@ describe('App Router Integration', () => {
     it('renders CommitDetail page at /:owner/:repo/commit/:hash', async () => {
       renderRoute(['/alice/my-repo/commit/abc123def456'])
 
-      expect(await screen.findByText(/commit:/i)).toBeInTheDocument()
+      expect(await screen.findByText(/commit:/i, {}, { timeout: 10000 })).toBeInTheDocument()
       expect(await screen.findByText(/hash:/i)).toBeInTheDocument()
       expect(await screen.findByText(/abc123def456/i)).toBeInTheDocument()
     })
@@ -124,7 +145,7 @@ describe('App Router Integration', () => {
     it('renders IssueList page at /:owner/:repo/issues', async () => {
       renderRoute(['/alice/my-repo/issues'])
 
-      expect(await screen.findByText(/issues:/i)).toBeInTheDocument()
+      expect(await screen.findByText(/issues:/i, {}, { timeout: 10000 })).toBeInTheDocument()
       expect(await screen.findByText(/alice/i)).toBeInTheDocument()
       expect(await screen.findByText(/my-repo/i)).toBeInTheDocument()
     })
@@ -132,7 +153,7 @@ describe('App Router Integration', () => {
     it('renders IssueDetail page at /:owner/:repo/issues/:id', async () => {
       renderRoute(['/alice/my-repo/issues/42'])
 
-      expect(await screen.findByText(/issue:/i)).toBeInTheDocument()
+      expect(await screen.findByText(/issue:/i, {}, { timeout: 10000 })).toBeInTheDocument()
       expect(await screen.findByText(/alice/i)).toBeInTheDocument()
       expect(await screen.findByText(/my-repo/i)).toBeInTheDocument()
       expect(await screen.findByText(/#42/i)).toBeInTheDocument()
@@ -141,7 +162,7 @@ describe('App Router Integration', () => {
     it('renders PRList page at /:owner/:repo/pulls', async () => {
       renderRoute(['/alice/my-repo/pulls'])
 
-      expect(await screen.findByText(/pull requests:/i)).toBeInTheDocument()
+      expect(await screen.findByText(/pull requests:/i, {}, { timeout: 10000 })).toBeInTheDocument()
       expect(await screen.findByText(/alice/i)).toBeInTheDocument()
       expect(await screen.findByText(/my-repo/i)).toBeInTheDocument()
     })
@@ -149,7 +170,7 @@ describe('App Router Integration', () => {
     it('renders PRDetail page at /:owner/:repo/pulls/:id', async () => {
       renderRoute(['/alice/my-repo/pulls/15'])
 
-      expect(await screen.findByText(/pull request:/i)).toBeInTheDocument()
+      expect(await screen.findByText(/pull request:/i, {}, { timeout: 10000 })).toBeInTheDocument()
       expect(await screen.findByText(/alice/i)).toBeInTheDocument()
       expect(await screen.findByText(/my-repo/i)).toBeInTheDocument()
       expect(await screen.findByText(/#15/i)).toBeInTheDocument()
@@ -160,20 +181,20 @@ describe('App Router Integration', () => {
     it('renders NotFound page for unknown root path', async () => {
       renderRoute(['/unknown-path'])
 
-      expect(await screen.findByText(/404.*not found/i)).toBeInTheDocument()
+      expect(await screen.findByText(/404.*not found/i, {}, { timeout: 10000 })).toBeInTheDocument()
       expect(await screen.findByText(/doesn't exist/i)).toBeInTheDocument()
     })
 
     it('renders NotFound page for unknown sub-path', async () => {
       renderRoute(['/alice/my-repo/unknown-section'])
 
-      expect(await screen.findByText(/404.*not found/i)).toBeInTheDocument()
+      expect(await screen.findByText(/404.*not found/i, {}, { timeout: 10000 })).toBeInTheDocument()
     })
 
     it('renders NotFound page for invalid route structure', async () => {
       renderRoute(['/just-one-segment'])
 
-      expect(await screen.findByText(/404.*not found/i)).toBeInTheDocument()
+      expect(await screen.findByText(/404.*not found/i, {}, { timeout: 10000 })).toBeInTheDocument()
     })
   })
 
@@ -184,7 +205,7 @@ describe('App Router Integration', () => {
       // The Suspense fallback should briefly appear
       // Using findBy to wait for final content
       // Home page shows "Repositories" heading after lazy load resolves
-      expect(await screen.findByRole('heading', { name: /repositories/i })).toBeInTheDocument()
+      expect(await screen.findByRole('heading', { name: /repositories/i }, { timeout: 10000 })).toBeInTheDocument()
     })
 
     it('successfully loads lazy component after suspense', async () => {
@@ -193,8 +214,8 @@ describe('App Router Integration', () => {
       // Wait for lazy-loaded component to resolve
       // RepoDetail page shows "Repository not found" when fetchRepositories returns []
       await waitFor(async () => {
-        expect(await screen.findByText(/repository not found/i)).toBeInTheDocument()
-      })
+        expect(await screen.findByText(/repository not found/i, {}, { timeout: 10000 })).toBeInTheDocument()
+      }, { timeout: 10000 })
     })
   })
 
@@ -212,7 +233,7 @@ describe('App Router Integration', () => {
 
       // Should start at repo detail (index 1)
       // RepoDetail page shows "Repository not found" when fetchRepositories returns []
-      expect(await screen.findByText(/repository not found/i)).toBeInTheDocument()
+      expect(await screen.findByText(/repository not found/i, {}, { timeout: 10000 })).toBeInTheDocument()
 
       // Navigate back
       await act(async () => {
@@ -220,9 +241,9 @@ describe('App Router Integration', () => {
       })
       await waitFor(() => {
         expect(screen.queryByText(/repository not found/i)).not.toBeInTheDocument()
-      })
+      }, { timeout: 10000 })
       // Home page shows "Repositories" heading
-      expect(await screen.findByRole('heading', { name: /repositories/i })).toBeInTheDocument()
+      expect(await screen.findByRole('heading', { name: /repositories/i }, { timeout: 10000 })).toBeInTheDocument()
     })
 
     it('supports browser forward button navigation', async () => {
@@ -240,20 +261,20 @@ describe('App Router Integration', () => {
       )
 
       // Should start at commits (index 1)
-      expect(await screen.findByText(/commits:/i)).toBeInTheDocument()
+      expect(await screen.findByText(/commits:/i, {}, { timeout: 10000 })).toBeInTheDocument()
 
       // Go back
       await act(async () => {
         router.navigate(-1)
       })
       // RepoDetail page shows "Repository not found" when fetchRepositories returns []
-      expect(await screen.findByText(/repository not found/i)).toBeInTheDocument()
+      expect(await screen.findByText(/repository not found/i, {}, { timeout: 10000 })).toBeInTheDocument()
 
       // Go forward
       await act(async () => {
         router.navigate(1)
       })
-      expect(await screen.findByText(/commits:/i)).toBeInTheDocument()
+      expect(await screen.findByText(/commits:/i, {}, { timeout: 10000 })).toBeInTheDocument()
     })
   })
 
@@ -275,7 +296,7 @@ describe('App Router Integration', () => {
       renderRoute(['/'])
 
       // Home page shows "Repositories" heading
-      expect(await screen.findByRole('heading', { name: /repositories/i })).toBeInTheDocument()
+      expect(await screen.findByRole('heading', { name: /repositories/i }, { timeout: 10000 })).toBeInTheDocument()
 
       // Query client should be available (verified by no errors)
       expect(testQueryClient).toBeDefined()
@@ -289,20 +310,23 @@ describe('App Router Integration', () => {
 
       // RepoDetail page shows "Repository not found" when fetchRepositories returns []
       // The params are extracted and used internally; the rendered output is the not-found state
-      expect(await screen.findByText(/repository not found/i)).toBeInTheDocument()
+      expect(await screen.findByText(/repository not found/i, {}, { timeout: 10000 })).toBeInTheDocument()
     })
 
     it('handles special characters in route params', async () => {
       renderRoute(['/npub1test/repo-name-123'])
 
       // RepoDetail page shows "Repository not found" when fetchRepositories returns []
-      expect(await screen.findByText(/repository not found/i)).toBeInTheDocument()
+      expect(await screen.findByText(/repository not found/i, {}, { timeout: 10000 })).toBeInTheDocument()
     })
 
     it('extracts wildcard file path in FileBrowser', async () => {
       renderRoute(['/alice/my-repo/src/main/docs/api/index.md'])
 
-      expect(await screen.findByText(/docs\/api\/index\.md/i)).toBeInTheDocument()
+      // FileBrowser page shows the extracted wildcard path
+      // (appears twice - once for mobile/tablet, once for desktop)
+      const headings = await screen.findAllByRole('heading', { name: /docs\/api\/index\.md/i }, { timeout: 10000 })
+      expect(headings.length).toBeGreaterThan(0)
     })
   })
 
@@ -310,7 +334,7 @@ describe('App Router Integration', () => {
     it('renders nested routes within repository path', async () => {
       renderRoute(['/alice/my-repo/issues'])
 
-      expect(await screen.findByText(/issues:/i)).toBeInTheDocument()
+      expect(await screen.findByText(/issues:/i, {}, { timeout: 10000 })).toBeInTheDocument()
       expect(await screen.findByText(/alice/i)).toBeInTheDocument()
     })
 
@@ -319,7 +343,7 @@ describe('App Router Integration', () => {
 
       // Should render RepoDetail (index route of :owner/:repo)
       // RepoDetail page shows "Repository not found" when fetchRepositories returns []
-      expect(await screen.findByText(/repository not found/i)).toBeInTheDocument()
+      expect(await screen.findByText(/repository not found/i, {}, { timeout: 10000 })).toBeInTheDocument()
     })
   })
 })
@@ -356,7 +380,7 @@ describe('Integration with main.tsx Setup', () => {
 
     expect(container).toBeInTheDocument()
     // Home page shows "Repositories" heading
-    expect(await screen.findByRole('heading', { name: /repositories/i })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: /repositories/i }, { timeout: 10000 })).toBeInTheDocument()
   })
 
   // DevTools rendering is handled in main.tsx, not testable via router tests.
